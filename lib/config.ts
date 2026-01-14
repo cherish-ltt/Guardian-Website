@@ -8,4 +8,5 @@ export const API_ENDPOINTS = {
   TWO_FACTOR_VERIFY: '/auth/2fa/verify',
   TWO_FACTOR_DISABLE: '/auth/2fa/disable',
   ADMIN_CREATE: '/admins',
+  AUDIT_LOGS: '/audit-logs',
 } as const;

@@ -1,22 +1,38 @@
-import { Button } from "@/components/ui/button";
-import { ProtectedRoute } from "@/components/protected-route";
+import { AppSidebar } from "@/components/app-sidebar"
+import { AuditLogTable } from "@/components/audit-log-table"
+import { ResourceCards } from "@/components/resource-cards"
+import { ResourceCharts } from "@/components/resource-charts"
+import { SiteHeader } from "@/components/site-header"
+import {
+  SidebarInset,
+  SidebarProvider,
+} from "@/components/ui/sidebar"
 
-export default function DashboardPage() {
+export default function Page() {
   return (
-    <ProtectedRoute>
-      <div className="min-h-svh bg-muted">
-        <div className="container mx-auto p-8">
-          <h1 className="text-3xl font-bold mb-6">管理后台</h1>
-          <div className="bg-card p-6 rounded-lg">
-            <p className="text-muted-foreground mb-4">
-              欢迎来到 Guardian 管理后台
-            </p>
-            <div className="space-y-4">
-              <p>这里是您的仪表板内容区域。</p>
+    <SidebarProvider
+      style={
+        {
+          "--sidebar-width": "calc(var(--spacing) * 72)",
+          "--header-height": "calc(var(--spacing) * 12)",
+        } as React.CSSProperties
+      }
+    >
+      <AppSidebar variant="inset" />
+      <SidebarInset>
+        <SiteHeader />
+        <div className="flex flex-1 flex-col">
+          <div className="@container/main flex flex-1 flex-col gap-2">
+            <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+              <ResourceCards />
+              <ResourceCharts />
+              <div className="px-4 lg:px-6">
+                <AuditLogTable />
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </ProtectedRoute>
-  );
+      </SidebarInset>
+    </SidebarProvider>
+  )
 }

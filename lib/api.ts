@@ -162,3 +162,48 @@ export async function getWithAuth<T>(endpoint: string): Promise<T> {
     headers: {},
   });
 }
+
+export interface AuditLogQueryParams {
+  page?: number
+  page_size?: number
+  username?: string
+  action?: string
+  method?: string
+  status_code?: number
+  start_date?: string
+  end_date?: string
+}
+
+export async function getAuditLogs(params?: AuditLogQueryParams): Promise<any> {
+  const searchParams = new URLSearchParams();
+  
+  if (params?.page) searchParams.append('page', params.page.toString());
+  if (params?.page_size) searchParams.append('page_size', params.page_size.toString());
+  if (params?.username) searchParams.append('username', params.username);
+  if (params?.action) searchParams.append('action', params.action);
+  if (params?.method) searchParams.append('method', params.method);
+  if (params?.status_code) searchParams.append('status_code', params.status_code.toString());
+  if (params?.start_date) searchParams.append('start_date', params.start_date);
+  if (params?.end_date) searchParams.append('end_date', params.end_date);
+
+  const endpoint = `/audit-logs${searchParams.toString() ? '?' + searchParams.toString() : ''}`;
+  return getWithAuth(endpoint);
+}
+
+export async function logout(): Promise<void> {
+  const response = await fetch('/api/auth/logout', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  })
+  
+  if (!response.ok) {
+    throw new Error('Logout failed')
+  }
+  
+  const result = await response.json()
+  if (!result.success) {
+    throw new Error(result.error || 'Logout failed')
+  }
+}
