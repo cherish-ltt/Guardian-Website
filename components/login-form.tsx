@@ -17,8 +17,8 @@ import {
   InputOTPSeparator,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
-import { API_ENDPOINTS } from "@/lib/config";
-import { post, ApiError, setAccessToken, type LoginResponse } from "@/lib/api";
+import { type LoginRequest, type LoginResponse } from "@/lib/api";
+import { ApiError } from "@/lib/api";
 
 interface LoginFormData {
   username: string;
@@ -67,7 +67,7 @@ export function LoginForm({
     setError(null);
 
     try {
-      const payload: any = {
+      const payload: LoginRequest = {
         username: formData.username,
         password: formData.password,
       };
@@ -76,9 +76,19 @@ export function LoginForm({
         payload.two_fa_code = formData.two_fa_code;
       }
 
-      const response: LoginResponse = await post(API_ENDPOINTS.LOGIN, payload);
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
 
-      setAccessToken(response.access_token);
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || 'Login failed');
+      }
+
+      const loginData: LoginResponse = result.data;
 
       if (show2FA && formData.two_fa_code) {
         window.location.href = "/dashboard";
@@ -86,16 +96,7 @@ export function LoginForm({
         window.location.href = "/2fa";
       }
     } catch (err) {
-      if (err instanceof ApiError) {
-        if (err.code === 17007 || err.code === 17008) {
-          setShow2FA(true);
-          setError(err.message || "需要 2FA 验证");
-        } else {
-          setError(err.message || "登录失败");
-        }
-      } else {
-        setError("发生未知错误，请稍后重试");
-      }
+      setError(err instanceof Error ? err.message : "发生未知错误，请稍后重试");
     } finally {
       setIsLoading(false);
     }

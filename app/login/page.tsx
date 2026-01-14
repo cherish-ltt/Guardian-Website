@@ -1,8 +1,20 @@
-import { GalleryVerticalEnd } from "lucide-react";
-
-import { LoginForm } from "@/components/login-form";
+'use client'
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { GalleryVerticalEnd } from "lucide-react"
+import { LoginForm } from "@/components/login-form"
+import { useAuth } from "@/contexts/auth-context"
 
 export default function LoginPage() {
+  const router = useRouter()
+  const { isAuthenticated } = useAuth()
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.replace('/dashboard')
+    }
+  }, [isAuthenticated, router])
+
   return (
     <div className="grid min-h-svh lg:grid-cols-2">
       <div className="bg-muted relative hidden lg:block">

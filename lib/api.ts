@@ -36,19 +36,41 @@ export class ApiError extends Error {
   }
 }
 
-export function getAccessToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem('access_token');
-}
+let isRefreshing = false;
+let refreshPromise: Promise<void> | null = null;
 
-export function setAccessToken(token: string): void {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem('access_token', token);
-}
+async function refreshAccessToken(): Promise<void> {
+  if (isRefreshing) {
+    if (refreshPromise) {
+      return refreshPromise;
+    }
+    return Promise.reject(new Error('Already refreshing'));
+  }
 
-export function clearAccessToken(): void {
-  if (typeof window === 'undefined') return;
-  localStorage.removeItem('access_token');
+  isRefreshing = true;
+  refreshPromise = fetch('/api/auth/refresh', {
+    method: 'POST',
+  })
+    .then(async (response) => {
+      if (!response.ok) {
+        throw new Error('Token refresh failed');
+      }
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.error || 'Refresh failed');
+      }
+    })
+    .catch((error) => {
+      console.error('Token refresh error:', error);
+      window.location.href = '/login';
+      throw error;
+    })
+    .finally(() => {
+      isRefreshing = false;
+      refreshPromise = null;
+    });
+
+  return refreshPromise;
 }
 
 async function handleResponse<T>(response: Response): Promise<T> {
@@ -65,6 +87,29 @@ async function handleResponse<T>(response: Response): Promise<T> {
   }
 
   return json.data;
+}
+
+async function fetchWithRetry<T>(
+  url: string,
+  options: RequestInit = {}
+): Promise<T> {
+  try {
+    const response = await fetch(url, options);
+    
+    if (response.status === 401) {
+      await refreshAccessToken();
+      
+      const newResponse = await fetch(url, options);
+      return handleResponse<T>(newResponse);
+    }
+    
+    return handleResponse<T>(response);
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    throw new ApiError(0, error instanceof Error ? error.message : 'Request failed');
+  }
 }
 
 export async function apiRequest<T>(
@@ -94,12 +139,12 @@ export async function post<T>(endpoint: string, data?: any): Promise<T> {
 }
 
 export async function postWithAuth<T>(endpoint: string, data?: any): Promise<T> {
-  const token = getAccessToken();
-  return apiRequest<T>(endpoint, {
+  return fetchWithRetry<T>(`${API_BASE_URL}${endpoint}`, {
     method: 'POST',
+    credentials: 'include',
     body: data ? JSON.stringify(data) : undefined,
     headers: {
-      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
     },
   });
 }
@@ -111,11 +156,9 @@ export async function get<T>(endpoint: string): Promise<T> {
 }
 
 export async function getWithAuth<T>(endpoint: string): Promise<T> {
-  const token = getAccessToken();
-  return apiRequest<T>(endpoint, {
+  return fetchWithRetry<T>(`${API_BASE_URL}${endpoint}`, {
     method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-    },
+    credentials: 'include',
+    headers: {},
   });
 }
