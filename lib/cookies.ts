@@ -38,8 +38,17 @@ export async function setAuthCookies(tokens: TokenResponse) {
 export async function clearAuthCookies() {
   const cookieStore = await cookies()
   
-  cookieStore.delete(ACCESS_TOKEN_COOKIE)
-  cookieStore.delete(REFRESH_TOKEN_COOKIE)
+  const pastDate = new Date(0)
+  
+  cookieStore.set(ACCESS_TOKEN_COOKIE, "", {
+    expires: pastDate,
+    path: '/',
+  })
+  
+  cookieStore.set(REFRESH_TOKEN_COOKIE, "", {
+    expires: pastDate,
+    path: '/',
+  })
 }
 
 export async function getRefreshToken(): Promise<string | undefined> {

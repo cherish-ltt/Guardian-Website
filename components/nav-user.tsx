@@ -54,6 +54,7 @@ export function NavUser({
     } catch (error) {
       toast.error("登出失败")
       console.error("Logout error:", error)
+      router.push("/login")
     } finally {
       setIsLoggingOut(false)
     }
