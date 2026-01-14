@@ -21,7 +21,7 @@
 </div>
 
 
-基于 Next.js 16、React 19、Tailwind CSS 和 shadcn/ui 构建的现代化前端应用，为 Guardian 后端认证系统提供完整的 Web 界面。
+基于 Next.js 16、React 19、Tailwind CSS 和 shadcn/ui 构建的现代化前端应用，为  [Guardian](https://github.com/cherish-ltt/Guardian) 后端认证系统提供完整的 Web 界面。
 
 ## 📖 项目简介
 
