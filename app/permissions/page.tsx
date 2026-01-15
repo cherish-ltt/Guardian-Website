@@ -89,8 +89,8 @@ export default function PermissionsPage() {
         keyword: keyword || undefined,
         resource_type: resourceType || undefined,
       })
-      setPermissions(response.data.list)
-      setTotal(response.data.total)
+      setPermissions(response.list)
+      setTotal(response.total)
     } catch (err) {
       if (err instanceof ApiError) {
         toast.error(err.message || "获取权限列表失败")
@@ -273,12 +273,12 @@ export default function PermissionsPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Label htmlFor="resourceType">资源类型</Label>
-                    <Select value={resourceType || ""} onValueChange={(value) => setResourceType(value || "")}>
+                    <Select value={resourceType || "all"} onValueChange={(value) => setResourceType(value === "all" ? "" : value)}>
                       <SelectTrigger className="w-32">
                         <SelectValue placeholder="全部" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">全部</SelectItem>
+                        <SelectItem value="all">全部</SelectItem>
                         <SelectItem value="api">API</SelectItem>
                         <SelectItem value="menu">菜单</SelectItem>
                         <SelectItem value="button">按钮</SelectItem>

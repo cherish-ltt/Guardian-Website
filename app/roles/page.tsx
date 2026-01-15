@@ -79,8 +79,8 @@ export default function RolesPage() {
         page_size: pageSize,
         keyword: keyword || undefined,
       })
-      setRoles(response.data.list)
-      setTotal(response.data.total)
+      setRoles(response.list)
+      setTotal(response.total)
     } catch (err) {
       if (err instanceof ApiError) {
         toast.error(err.message || "获取角色列表失败")
@@ -255,11 +255,11 @@ export default function RolesPage() {
                             <TableCell className="font-medium">{role.code}</TableCell>
                             <TableCell>{role.name}</TableCell>
                             <TableCell>{role.description || "-"}</TableCell>
-                            <TableCell>
-                              <Badge variant="secondary">
-                                {role.code?.length || 0} 个
-                              </Badge>
-                            </TableCell>
+                             <TableCell>
+                               <Badge variant={role.is_system ? "default" : "secondary"}>
+                                 {role.is_system ? "系统角色" : "自定义"}
+                               </Badge>
+                             </TableCell>
                             <TableCell>
                               <div className="flex gap-2">
                                 <Button

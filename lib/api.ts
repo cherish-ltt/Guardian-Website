@@ -318,11 +318,11 @@ export async function getSystemInfo(limit?: number): Promise<SystemInfo[]> {
   return getWithAuth<SystemInfo[]>(`${API_ENDPOINTS.SYSTEM_INFO}${query}`);
 }
 
-export async function changePassword(newPassword: string): Promise<ApiResponse<null>> {
+export async function changePassword(newPassword: string): Promise<null> {
   return postWithAuth(API_ENDPOINTS.CHANGE_PASSWORD, { new_password: newPassword });
 }
 
-export async function resetPassword(username: string, twoFaCode: string, newPassword: string): Promise<ApiResponse<null>> {
+export async function resetPassword(username: string, twoFaCode: string, newPassword: string): Promise<null> {
   return post(API_ENDPOINTS.RESET_PASSWORD, {
     username,
     two_fa_code: twoFaCode,
@@ -335,7 +335,7 @@ export async function getAdmins(params?: {
   page_size?: number;
   status?: number;
   keyword?: string;
-}): Promise<ApiResponse<{ total: number; page: number; page_size: number; list: AdminInfo[] }>> {
+}): Promise<{ total: number; page: number; page_size: number; list: AdminInfo[] }> {
   const query = new URLSearchParams();
   if (params?.page) query.append('page', params.page.toString());
   if (params?.page_size) query.append('page_size', params.page_size.toString());
@@ -350,21 +350,21 @@ export async function getAdmins(params?: {
 export async function createAdmin(data: {
   username: string;
   password: string;
-  is_super_admin?: boolean;
+  is_super_admin: boolean;
   role_ids?: string[];
-}): Promise<ApiResponse<AdminInfo>> {
+}): Promise<AdminInfo> {
   return postWithAuth(API_ENDPOINTS.ADMINS, data);
 }
 
 export async function updateAdmin(id: string, data: {
-  password?: string;
-  status?: number;
+  status: number;
   role_ids?: string[];
-}): Promise<ApiResponse<AdminInfo>> {
+  password?: string;
+}): Promise<AdminInfo> {
   return putWithAuth(`${API_ENDPOINTS.ADMINS}/${id}`, data);
 }
 
-export async function deleteAdmin(id: string): Promise<ApiResponse<null>> {
+export async function deleteAdmin(id: string): Promise<null> {
   return deleteWithAuth(`${API_ENDPOINTS.ADMINS}/${id}`);
 }
 
@@ -373,11 +373,7 @@ export interface RoleInfo {
   code: string
   name: string
   description: string | null
-  resource_type: string | null
-  http_method: string | null
-  resource_path: string | null
-  parent_id: string | null
-  sort_order: number | null
+  is_system: boolean | null
   created_at: string
   updated_at: string
 }
@@ -404,7 +400,7 @@ export async function getRoles(params?: {
   page?: number;
   page_size?: number;
   keyword?: string;
-}): Promise<ApiResponse<{ total: number; page: number; page_size: number; list: RoleInfo[] }>> {
+}): Promise<{ total: number; page: number; page_size: number; list: RoleInfo[] }> {
   const query = new URLSearchParams();
   if (params?.page) query.append('page', params.page.toString());
   if (params?.page_size) query.append('page_size', params.page_size.toString());
@@ -413,7 +409,7 @@ export async function getRoles(params?: {
   return getWithAuth(`${API_ENDPOINTS.ROLES}${queryString ? `?${queryString}` : ''}`);
 }
 
-export async function getRole(id: string): Promise<ApiResponse<RoleInfo>> {
+export async function getRole(id: string): Promise<RoleInfo> {
   return getWithAuth(`${API_ENDPOINTS.ROLES}/${id}`);
 }
 
@@ -426,7 +422,7 @@ export async function createRole(data: {
   resource_path?: string;
   parent_id?: string;
   sort_order?: number;
-}): Promise<ApiResponse<RoleInfo>> {
+}): Promise<RoleInfo> {
   return postWithAuth(API_ENDPOINTS.ROLES, data);
 }
 
@@ -434,16 +430,11 @@ export async function updateRole(id: string, data: {
   code?: string;
   name?: string;
   description?: string;
-  resource_type?: string;
-  http_method?: string;
-  resource_path?: string;
-  parent_id?: string;
-  sort_order?: number;
-}): Promise<ApiResponse<RoleInfo>> {
+}): Promise<RoleInfo> {
   return putWithAuth(`${API_ENDPOINTS.ROLES}/${id}`, data);
 }
 
-export async function deleteRole(id: string): Promise<ApiResponse<null>> {
+export async function deleteRole(id: string): Promise<null> {
   return deleteWithAuth(`${API_ENDPOINTS.ROLES}/${id}`);
 }
 
@@ -452,7 +443,7 @@ export async function getPermissions(params?: {
   page_size?: number;
   resource_type?: string;
   keyword?: string;
-}): Promise<ApiResponse<{ total: number; page: number; page_size: number; list: PermissionInfo[] }>> {
+}): Promise<{ total: number; page: number; page_size: number; list: PermissionInfo[] }> {
   const query = new URLSearchParams();
   if (params?.page) query.append('page', params.page.toString());
   if (params?.page_size) query.append('page_size', params.page_size.toString());
@@ -462,11 +453,11 @@ export async function getPermissions(params?: {
   return getWithAuth(`${API_ENDPOINTS.PERMISSIONS}${queryString ? `?${queryString}` : ''}`);
 }
 
-export async function getPermissionsTree(): Promise<ApiResponse<PermissionTreeNode[]>> {
+export async function getPermissionsTree(): Promise<PermissionTreeNode[]> {
   return getWithAuth(API_ENDPOINTS.PERMISSIONS_TREE);
 }
 
-export async function getPermission(id: string): Promise<ApiResponse<PermissionInfo>> {
+export async function getPermission(id: string): Promise<PermissionInfo> {
   return getWithAuth(`${API_ENDPOINTS.PERMISSIONS}/${id}`);
 }
 
@@ -479,7 +470,7 @@ export async function createPermission(data: {
   resource_path?: string;
   parent_id?: string;
   sort_order?: number;
-}): Promise<ApiResponse<PermissionInfo>> {
+}): Promise<PermissionInfo> {
   return postWithAuth(API_ENDPOINTS.PERMISSIONS, data);
 }
 
@@ -492,14 +483,14 @@ export async function updatePermission(id: string, data: {
   resource_path?: string;
   parent_id?: string;
   sort_order?: number;
-}): Promise<ApiResponse<PermissionInfo>> {
+}): Promise<PermissionInfo> {
   return putWithAuth(`${API_ENDPOINTS.PERMISSIONS}/${id}`, data);
 }
 
-export async function deletePermission(id: string): Promise<ApiResponse<null>> {
+export async function deletePermission(id: string): Promise<null> {
   return deleteWithAuth(`${API_ENDPOINTS.PERMISSIONS}/${id}`);
 }
 
-export async function assignPermissionsToRole(roleId: string, permissionIds: string[]): Promise<ApiResponse<null>> {
+export async function assignPermissionsToRole(roleId: string, permissionIds: string[]): Promise<null> {
   return postWithAuth(`${API_ENDPOINTS.ROLES}/${roleId}/permissions`, { permission_ids: permissionIds });
 }

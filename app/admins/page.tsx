@@ -84,8 +84,8 @@ export default function AdminsPage() {
         keyword: keyword || undefined,
         status: status,
       })
-      setAdmins(response.data.list)
-      setTotal(response.data.total)
+      setAdmins(response.list)
+      setTotal(response.total)
     } catch (err) {
       if (err instanceof ApiError) {
         toast.error(err.message || "获取管理员列表失败")
