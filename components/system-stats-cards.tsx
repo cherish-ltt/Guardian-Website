@@ -21,11 +21,11 @@ export function SystemStatsCards({ data }: SystemStatsCardsProps) {
   }
 
   const formatNetwork = (bytes: number | null | undefined): string => {
-    if (!bytes || bytes === 0) return "0 B/s"
-    const numBytes = typeof bytes === 'string' ? Number(bytes) : bytes
-    if (isNaN(numBytes) || numBytes === 0) return "0 B/s"
+    if (!bytes || bytes === 0) return "0 Mb/s"
+    const numBytes = (typeof bytes === 'string' ? Number(bytes) : bytes) / 100
+    if (isNaN(numBytes) || numBytes === 0) return "0 Mb/s"
     const k = 1024
-    const sizes = ["B/s", "KB/s", "MB/s", "GB/s"]
+    const sizes = ["b/s", "Kb/s", "Mb/s", "Gb/s"]
     const i = Math.floor(Math.log(numBytes) / Math.log(k))
     return `${(numBytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`
   }
@@ -85,7 +85,7 @@ export function SystemStatsCards({ data }: SystemStatsCardsProps) {
     },
     {
       title: "网络流量",
-      value: latestData ? "—" : "暂无数据",
+      value: latestData ? "External" : "暂无数据",
       description: (
         <span className="flex flex-col gap-1 text-xs">
           <span>下载: {formatNetwork(networkDownload)}</span>

@@ -15,19 +15,19 @@ import { getSystemInfo, ApiError } from "@/lib/api"
 
 export default function Page() {
   const [systemData, setSystemData] = useState<SystemInfo[] | null>(null)
-  const [timeRange, setTimeRange] = useState("1h")
+  const [timeRange, setTimeRange] = useState("20")
   const [isLoading, setIsLoading] = useState(true)
 
   const fetchSystemInfo = async () => {
     setIsLoading(true)
     try {
-      let limit = 6
-      if (timeRange === "1h") {
-        limit = 60
-      } else if (timeRange === "12h") {
-        limit = 720
-      } else if (timeRange === "24h") {
-        limit = 1440
+      let limit = 20
+      if (timeRange === "20") {
+        limit = 20
+      } else if (timeRange === "50") {
+        limit = 50
+      } else if (timeRange === "100") {
+        limit = 100
       }
       const data = await getSystemInfo(limit)
       setSystemData(data)
