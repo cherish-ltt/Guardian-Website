@@ -1,10 +1,10 @@
 # 
 
 <div align="center">
-  <h1>Guardian Auth API v1.0</h1>
+  <h1>Guardian Auth API v1.1</h1>
   <p>
-  <a href="https://img.shields.io/badge/version-v1.0-blue.svg">
-    <img src="https://img.shields.io/badge/version-v1.0-blue.svg" alt="license"/>
+  <a href="https://img.shields.io/badge/version-v1.1-blue.svg">
+    <img src="https://img.shields.io/badge/version-v1.1-blue.svg" alt="license"/>
   </a>
   <a href="https://img.shields.io/badge/status-stable-green.svg">
     <img src="https://img.shields.io/badge/status-stable-green.svg" alt="license"/>
@@ -24,13 +24,14 @@
 - [管理员接口](#管理员接口-待实现)
 - [角色接口](#角色接口-待实现)
 - [权限接口](#权限接口-待实现)
+- [系统信息接口](#系统信息接口)
 - [错误码](#错误码)
 
 ---
 
 ## 概述
 
-Guardian API v1.0 提供了完整的用户认证、权限管理和操作审计功能。
+Guardian API v1.1 提供了完整的用户认证、权限管理、操作审计和系统监控功能。
 
 **Base URL**: `http://localhost:6123/guardian-auth/v1`
 
@@ -890,6 +891,87 @@ GET /guardian-auth/v1/permissions?page=1&page_size=20&resource_type=api
 
 ---
 
+## 系统信息接口
+
+### 查询系统信息列表
+
+**接口描述**: 获取系统监控信息列表，包括 CPU、内存、磁盘和网络使用情况
+
+**请求方式**: `GET`
+
+**请求路径**: `/systeminfo`
+
+**认证**: 需要 JWT
+
+**查询参数**:
+
+| 参数名 | 类型 | 必填 | 默认值 | 说明 |
+|--------|------|--------|--------|------|
+| limit | number | 否 | 6 | 返回记录数量限制 |
+
+**请求示例**:
+
+```
+GET /guardian-auth/v1/systeminfo?limit=10
+```
+
+**响应示例**:
+
+```json
+{
+  "code": 200,
+  "msg": null,
+  "data": [
+    {
+      "id": "0190a1e8-7b3e-7a3f-8c1a-9e2f3a4b5c6d",
+      "cpu_count": 8,
+      "cpu_total_load": 45.50,
+      "memory_used": 8589934592,
+      "memory_total": 17179869184,
+      "disk_used": 549755813888,
+      "disk_total": 1099511627776,
+      "network_upload": 104857600,
+      "network_download": 524288000,
+      "created_at": "2024-01-15T17:30:00Z"
+    },
+    {
+      "id": "0190b2f9-8c4f-8b4g-9d2b-0f3g4b5c6d7e",
+      "cpu_count": 8,
+      "cpu_total_load": 42.30,
+      "memory_used": 8388608000,
+      "memory_total": 17179869184,
+      "disk_used": 549755813888,
+      "disk_total": 1099511627776,
+      "network_upload": 104857600,
+      "network_download": 524288000,
+      "created_at": "2024-01-15T17:25:00Z"
+    }
+  ]
+}
+```
+
+**响应字段说明**:
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| id | UUID | 系统信息记录 ID |
+| cpu_count | integer | CPU 核心数 |
+| cpu_total_load | decimal | CPU 总负载率（0-100） |
+| memory_used | integer | 已使用内存（字节） |
+| memory_total | integer | 总内存（字节） |
+| disk_used | integer | 已使用磁盘空间（字节） |
+| disk_total | integer | 总磁盘空间（字节） |
+| network_upload | integer | 网络上传流量（字节） |
+| network_download | integer | 网络下载流量（字节） |
+| created_at | datetime | 记录创建时间（ISO 8601 格式） |
+
+**业务规则**:
+- 数据按创建时间倒序排列（最新的在最前）
+- 默认返回最近 6 条记录
+- 系统信息由后台定时任务自动采集和存储
+
+---
+
 ## 错误码
 
 | 状态码 | 说明 |
@@ -972,6 +1054,13 @@ curl http://localhost:6123/guardian-auth/v1/admins?page=1&page_size=20 \
   -H "Authorization: Bearer <your_access_token>"
 ```
 
+#### 查询系统信息
+
+```bash
+curl http://localhost:6123/guardian-auth/v1/systeminfo?limit=10 \
+  -H "Authorization: Bearer <your_access_token>"
+```
+
 ---
 
 ## 附录
@@ -1002,6 +1091,14 @@ curl http://localhost:6123/guardian-auth/v1/admins?page=1&page_size=20 \
 ---
 
 ## 更新日志
+
+### v1.1.0 (2026-01-15)
+- ✅ 新增系统信息接口（`/systeminfo`）
+- ✅ 新增 guardian_systeminfo 数据表
+- ✅ 支持查询系统 CPU、内存、磁盘、网络监控数据
+- ✅ 系统信息按时间倒序排列
+- ✅ 支持自定义返回记录数量（limit 参数）
+- 📝 更新 API 文档，添加系统信息接口说明
 
 ### v1.0.0 (2026-01-14)
 - ✅ 实现基础认证功能（登录、登出、刷新令牌）
