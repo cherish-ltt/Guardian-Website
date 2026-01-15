@@ -237,253 +237,262 @@ export default function PermissionsPage() {
   const totalPages = Math.ceil(total / pageSize)
 
   return (
-    <SidebarProvider
-      style={{
-        "--sidebar-width": "calc(var(--spacing) * 72)",
-        "--header-height": "calc(var(--spacing) * 12)",
-      } as React.CSSProperties}
-    >
-      <AppSidebar variant="inset" />
-      <SidebarInset>
-        <SiteHeader />
-        <div className="flex flex-1 flex-col">
-          <div className="@container/main flex flex-1 flex-col gap-2">
-            <div className="flex flex-col gap-4 px-4 py-4 lg:px-6 lg:py-6">
-              <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold">权限管理</h1>
-                <Button onClick={handleCreate}>添加权限</Button>
-              </div>
-
-              <div className="flex gap-4">
-                <div className="flex items-center gap-2">
-                  <Label htmlFor="keyword">搜索</Label>
-                  <Input
-                    id="keyword"
-                    value={keyword}
-                    onChange={(e) => setKeyword(e.target.value)}
-                    placeholder="权限名称或代码"
-                    className="w-48"
-                  />
-                  <Button onClick={handleSearch} disabled={loading}>
-                    搜索
-                  </Button>
+    <>
+      <SidebarProvider
+        style={
+          {
+            "--sidebar-width": "calc(var(--spacing) * 72)",
+            "--header-height": "calc(var(--spacing) * 12)",
+          } as React.CSSProperties
+        }
+      >
+        <AppSidebar variant="inset" />
+        <SidebarInset>
+          <SiteHeader />
+          <div className="flex flex-1 flex-col">
+            <div className="@container/main flex flex-1 flex-col gap-2">
+              <div className="flex flex-col gap-4 px-4 py-4 lg:px-6 lg:py-6">
+                <div className="flex items-center justify-between">
+                  <h1 className="text-2xl font-bold">权限管理</h1>
+                  <Button onClick={handleCreate}>添加权限</Button>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Label htmlFor="resourceType">资源类型</Label>
-                  <Select value={resourceType || ""} onValueChange={(value) => setResourceType(value || "")}>
-                    <SelectTrigger className="w-32">
-                      <SelectValue placeholder="全部" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">全部</SelectItem>
-                      <SelectItem value="api">API</SelectItem>
-                      <SelectItem value="menu">菜单</SelectItem>
-                      <SelectItem value="button">按钮</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
 
-              <div className="rounded-lg border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>权限代码</TableHead>
-                      <TableHead>权限名称</TableHead>
-                      <TableHead>描述</TableHead>
-                      <TableHead>资源类型</TableHead>
-                      <TableHead>HTTP 方法</TableHead>
-                      <TableHead>资源路径</TableHead>
-                      <TableHead>操作</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {loading ? (
+                <div className="flex gap-4">
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="keyword">搜索</Label>
+                    <Input
+                      id="keyword"
+                      value={keyword}
+                      onChange={(e) => setKeyword(e.target.value)}
+                      placeholder="权限名称或代码"
+                      className="w-48"
+                    />
+                    <Button onClick={handleSearch} disabled={loading}>
+                      搜索
+                    </Button>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="resourceType">资源类型</Label>
+                    <Select value={resourceType || ""} onValueChange={(value) => setResourceType(value || "")}>
+                      <SelectTrigger className="w-32">
+                        <SelectValue placeholder="全部" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">全部</SelectItem>
+                        <SelectItem value="api">API</SelectItem>
+                        <SelectItem value="menu">菜单</SelectItem>
+                        <SelectItem value="button">按钮</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="rounded-lg border">
+                  <Table>
+                    <TableHeader>
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center">
-                          加载中...
-                        </TableCell>
+                        <TableHead>权限代码</TableHead>
+                        <TableHead>权限名称</TableHead>
+                        <TableHead>描述</TableHead>
+                        <TableHead>资源类型</TableHead>
+                        <TableHead>HTTP 方法</TableHead>
+                        <TableHead>资源路径</TableHead>
+                        <TableHead>操作</TableHead>
                       </TableRow>
-                    ) : permissions.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={8} className="text-center">
-                          暂无数据
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      permissions.map((permission) => (
-                        <TableRow key={permission.id}>
-                          <TableCell className="font-medium">{permission.code}</TableCell>
-                          <TableCell>{permission.name}</TableCell>
-                          <TableCell>{permission.description || "-"}</TableCell>
-                          <TableCell>
-                            <Badge variant="secondary">{permission.resource_type || "-"}</Badge>
-                          </TableCell>
-                          <TableCell>{permission.http_method || "-"}</TableCell>
-                          <TableCell>{permission.resource_path || "-"}</TableCell>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleEdit(permission)}
-                              >
-                                编辑
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDelete(permission.id, permission.name)}
-                              >
-                                删除
-                              </Button>
-                            </div>
+                    </TableHeader>
+                    <TableBody>
+                      {loading ? (
+                        <TableRow>
+                          <TableCell colSpan={8} className="text-center">
+                            加载中...
                           </TableCell>
                         </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-muted-foreground">
-                  共 {total} 条记录，当前第 {currentPage} / {totalPages} 页
+                      ) : permissions.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={8} className="text-center">
+                            暂无数据
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        permissions.map((permission) => (
+                          <TableRow key={permission.id}>
+                            <TableCell className="font-medium">{permission.code}</TableCell>
+                            <TableCell>{permission.name}</TableCell>
+                            <TableCell>{permission.description || "-"}</TableCell>
+                            <TableCell>
+                              <Badge variant="secondary">{permission.resource_type || "-"}</Badge>
+                            </TableCell>
+                            <TableCell>{permission.http_method || "-"}</TableCell>
+                            <TableCell>{permission.resource_path || "-"}</TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleEdit(permission)}
+                                >
+                                  编辑
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDelete(permission.id, permission.name)}
+                                >
+                                  删除
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                    disabled={loading || currentPage <= 1}
-                  >
-                    上一页
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                    disabled={loading || currentPage >= totalPages}
-                  >
-                    下一页
-                  </Button>
+
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-muted-foreground">
+                    共 {total} 条记录，当前第 {currentPage} / {totalPages} 页
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={loading || currentPage <= 1}
+                    >
+                      上一页
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={loading || currentPage >= totalPages}
+                    >
+                      下一页
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
-
-    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{dialogMode === "create" ? "添加权限" : "编辑权限"}</DialogTitle>
-          <DialogDescription>
-            {dialogMode === "create" ? "请填写权限信息" : "请更新权限信息"}
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleFormSubmit}>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="code">权限代码 *</Label>
-              <Input
-                id="code"
-                value={formData.code}
-                onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                placeholder="请输入权限代码（如 ADMIN, USER）"
-                required
-                disabled={formLoading || (dialogMode === "edit")}
-                maxLength={50}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="name">权限名称 *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="请输入权限名称"
-                required
-                disabled={formLoading}
-                maxLength={100}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">描述</Label>
-              <Input
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="请输入权限描述（可选）"
-                disabled={formLoading}
-                maxLength={200}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="resource_type">资源类型</Label>
-              <Select value={formData.resource_type || ""} onValueChange={(value) => setFormData({ ...formData, resource_type: value || "" })}>
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">-</SelectItem>
-                  <SelectItem value="api">API</SelectItem>
-                  <SelectItem value="menu">菜单</SelectItem>
-                  <SelectItem value="button">按钮</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
+        </SidebarInset>
+      </SidebarProvider>
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{dialogMode === "create" ? "添加权限" : "编辑权限"}</DialogTitle>
+            <DialogDescription>
+              {dialogMode === "create" ? "请填写权限信息" : "请更新权限信息"}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleFormSubmit}>
+            <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="http_method">HTTP 方法</Label>
-                <Select value={formData.http_method || ""} onValueChange={(value) => setFormData({ ...formData, http_method: value || "" })}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">-</SelectItem>
-                    <SelectItem value="GET">GET</SelectItem>
-                    <SelectItem value="POST">POST</SelectItem>
-                    <SelectItem value="PUT">PUT</SelectItem>
-                    <SelectItem value="DELETE">DELETE</SelectItem>
-                    <SelectItem value="PATCH">PATCH</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="resource_path">资源路径</Label>
+                <Label htmlFor="code">权限代码 *</Label>
                 <Input
-                  id="resource_path"
-                  value={formData.resource_path}
-                  onChange={(e) => setFormData({ ...formData, resource_path: e.target.value })}
-                  placeholder="如 /api/users"
+                  id="code"
+                  value={formData.code}
+                  onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                  placeholder="请输入权限代码（如 API_USER_CREATE）"
+                  required
+                  disabled={formLoading || (dialogMode === "edit")}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="name">权限名称 *</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="请输入权限名称"
+                  required
+                  disabled={formLoading}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="description">描述</Label>
+                <Input
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="请输入权限描述（可选）"
                   disabled={formLoading}
                   maxLength={200}
                 />
               </div>
+              {dialogMode === "create" && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="resource_type">资源类型</Label>
+                    <Select value={formData.resource_type} onValueChange={(value) => setFormData({ ...formData, resource_type: value })}>
+                      <SelectTrigger id="resource_type">
+                        <SelectValue placeholder="请选择资源类型" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="api">API</SelectItem>
+                        <SelectItem value="menu">菜单</SelectItem>
+                        <SelectItem value="button">按钮</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {formData.resource_type === "api" && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="http_method">HTTP 方法</Label>
+                        <Select value={formData.http_method} onValueChange={(value) => setFormData({ ...formData, http_method: value })}>
+                          <SelectTrigger id="http_method">
+                            <SelectValue placeholder="请选择HTTP方法" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="GET">GET</SelectItem>
+                            <SelectItem value="POST">POST</SelectItem>
+                            <SelectItem value="PUT">PUT</SelectItem>
+                            <SelectItem value="DELETE">DELETE</SelectItem>
+                            <SelectItem value="PATCH">PATCH</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="resource_path">资源路径</Label>
+                        <Input
+                          id="resource_path"
+                          value={formData.resource_path}
+                          onChange={(e) => setFormData({ ...formData, resource_path: e.target.value })}
+                          placeholder="例如: /api/v1/users"
+                          disabled={formLoading}
+                        />
+                      </div>
+                    </>
+                  )}
+                  <div className="space-y-2">
+                    <Label htmlFor="parent_id">父级权限ID（可选）</Label>
+                    <Input
+                      id="parent_id"
+                      value={formData.parent_id}
+                      onChange={(e) => setFormData({ ...formData, parent_id: e.target.value })}
+                      placeholder="请输入父级权限ID"
+                      disabled={formLoading}
+                    />
+                  </div>
+                </>
+              )}
             </div>
-          </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setDialogOpen(false)}
-              disabled={formLoading}
-            >
-              取消
-            </Button>
-            <Button type="submit" disabled={formLoading}>
-              {formLoading ? (dialogMode === "create" ? "创建中..." : "更新中...") : (dialogMode === "create" ? "确认创建" : "确认更新")}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setDialogOpen(false)}
+                disabled={formLoading}
+              >
+                取消
+              </Button>
+              <Button type="submit" disabled={formLoading}>
+                {formLoading ? (dialogMode === "create" ? "创建中..." : "更新中...") : (dialogMode === "create" ? "确认创建" : "确认更新")}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

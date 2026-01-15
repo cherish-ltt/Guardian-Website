@@ -37,7 +37,7 @@ import {
 } from "@/components/ui/select"
 import { toast } from "sonner"
 import { getAccessToken, getRoles, createRole, updateRole, deleteRole, ApiError, type RoleInfo } from "@/lib/api"
- 
+
 interface RoleFormData {
   code: string
   name: string
@@ -203,117 +203,117 @@ export default function RolesPage() {
     }
   }
 
+
   const totalPages = Math.ceil(total / pageSize)
 
   return (
-    <SidebarProvider
-      style={{
-        "--sidebar-width": "calc(var(--spacing) * 72)",
-        "--header-height": "calc(var(--spacing) * 12)",
-      } as React.CSSProperties}
-    }
-    >
-      <AppSidebar variant="inset" />
-      <SidebarInset>
-        <SiteHeader />
-        <div className="flex flex-1 flex-col">
-          <div className="@container/main flex flex-1 flex-col gap-2">
-            <div className="flex flex-col gap-4 px-4 py-4 lg:px-6 lg:py-6">
-              <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold">角色管理</h1>
-                <Button onClick={handleCreate}>添加角色</Button>
-              </div>
+    <>
+      <SidebarProvider
+        style={{
+          "--sidebar-width": "calc(var(--spacing) * 72)",
+          "--header-height": "calc(var(--spacing) * 12)",
+        } as React.CSSProperties}
+      >
+        <AppSidebar variant="inset" />
+        <SidebarInset>
+          <SiteHeader />
+          <div className="flex flex-1 flex-col">
+            <div className="@container/main flex flex-1 flex-col gap-2">
+              <div className="flex flex-col gap-4 px-4 py-4 lg:px-6 lg:py-6">
+                <div className="flex items-center justify-between">
+                  <h1 className="text-2xl font-bold">角色管理</h1>
+                  <Button onClick={handleCreate}>添加角色</Button>
+                </div>
 
-              <div className="rounded-lg border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>角色代码</TableHead>
-                      <TableHead>角色名称</TableHead>
-                      <TableHead>描述</TableHead>
-                      <TableHead>权限数量</TableHead>
-                      <TableHead>操作</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {loading ? (
+                <div className="rounded-lg border">
+                  <Table>
+                    <TableHeader>
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center">
-                          加载中...
-                        </TableCell>
+                        <TableHead>角色代码</TableHead>
+                        <TableHead>角色名称</TableHead>
+                        <TableHead>描述</TableHead>
+                        <TableHead>权限数量</TableHead>
+                        <TableHead>操作</TableHead>
                       </TableRow>
-                    ) : roles.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center">
-                          暂无数据
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      roles.map((role) => (
-                        <TableRow key={role.id}>
-                          <TableCell className="font-medium">{role.code}</TableCell>
-                          <TableCell>{role.name}</TableCell>
-                          <TableCell>{role.description || "-"}</TableCell>
-                          <TableCell>
-                            <Badge variant="secondary">
-                              {role.code?.length || 0} 个
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleEdit(role)}
-                              >
-                                编辑
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDelete(role.id, role.name)}
-                              >
-                                删除
-                              </Button>
-                            </div>
+                    </TableHeader>
+                    <TableBody>
+                      {loading ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center">
+                            加载中...
                           </TableCell>
                         </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-muted-foreground">
-                  共 {total} 条记录，当前第 {currentPage} / {totalPages} 页
+                      ) : roles.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center">
+                            暂无数据
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        roles.map((role) => (
+                          <TableRow key={role.id}>
+                            <TableCell className="font-medium">{role.code}</TableCell>
+                            <TableCell>{role.name}</TableCell>
+                            <TableCell>{role.description || "-"}</TableCell>
+                            <TableCell>
+                              <Badge variant="secondary">
+                                {role.code?.length || 0} 个
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleEdit(role)}
+                                >
+                                  编辑
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDelete(role.id, role.name)}
+                                >
+                                  删除
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                    disabled={loading || currentPage <= 1}
-                  >
-                    上一页
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                    disabled={loading || currentPage >= totalPages}
-                  >
-                    下一页
-                  </Button>
+
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-muted-foreground">
+                    共 {total} 条记录，当前第 {currentPage} / {totalPages} 页
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={loading || currentPage <= 1}
+                    >
+                      上一页
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={loading || currentPage >= totalPages}
+                    >
+                      下一页
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
-
-    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        </SidebarInset>
+      </SidebarProvider>
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{dialogMode === "create" ? "添加角色" : "编辑角色"}</DialogTitle>
@@ -377,5 +377,6 @@ export default function RolesPage() {
         </form>
       </DialogContent>
     </Dialog>
+    </>
   )
 }
