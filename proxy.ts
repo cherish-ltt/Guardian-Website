@@ -23,10 +23,7 @@ export function proxy(request: NextRequest) {
   const token = request.cookies.get('access_token')?.value;
   
   if (pathname === '/') {
-    if (token && isValidToken(token)) {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
-    }
-    return NextResponse.redirect(new URL('/login', request.url));
+    return NextResponse.next();
   }
   
   if (publicRoutes.includes(pathname)) {
