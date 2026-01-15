@@ -33,7 +33,9 @@ export function Step2FA() {
     setError(null);
 
     try {
-      const data: TwoFASetupResponse = await postWithAuth(API_ENDPOINTS.TWO_FACTOR_SETUP);
+      const data: TwoFASetupResponse = await postWithAuth(
+        API_ENDPOINTS.TWO_FACTOR_SETUP,
+      );
       setSetupData(data);
     } catch (err) {
       if (err instanceof ApiError) {
@@ -54,11 +56,12 @@ export function Step2FA() {
       await postWithAuth(API_ENDPOINTS.TWO_FACTOR_DISABLE);
       router.push("/dashboard");
     } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.message || "禁用 2FA 失败");
-      } else {
-        setError("发生未知错误");
-      }
+      router.push("/dashboard");
+      // if (err instanceof ApiError) {
+      //   setError(err.message || "禁用 2FA 失败");
+      // } else {
+      //   setError("发生未知错误");
+      // }
     } finally {
       setIsDisabling(false);
     }
@@ -69,7 +72,7 @@ export function Step2FA() {
   };
 
   const getQRCodeUrl = (url: string) => {
-    if (url.startsWith('data:image')) {
+    if (url.startsWith("data:image")) {
       return url;
     }
     return `data:image/png;base64,${url}`;
@@ -96,7 +99,8 @@ export function Step2FA() {
               </CardHeader>
               <CardContent className="flex-1">
                 <p className="text-sm text-muted-foreground">
-                  使用 Google Authenticator、Authy 等 TOTP 应用扫描二维码或输入密钥
+                  使用 Google Authenticator、Authy 等 TOTP
+                  应用扫描二维码或输入密钥
                 </p>
               </CardContent>
               <CardFooter>
@@ -150,9 +154,7 @@ export function Step2FA() {
             <Card className="flex flex-col">
               <CardHeader>
                 <CardTitle>密钥与备用码</CardTitle>
-                <CardDescription>
-                  请妥善保存这些信息
-                </CardDescription>
+                <CardDescription>请妥善保存这些信息</CardDescription>
               </CardHeader>
               <CardContent className="flex-1 flex flex-col gap-4">
                 <Field>
@@ -213,9 +215,7 @@ export function Step2FA() {
             <Card className="flex flex-col">
               <CardHeader>
                 <CardTitle>扫描二维码</CardTitle>
-                <CardDescription>
-                  使用您的 TOTP 应用扫描
-                </CardDescription>
+                <CardDescription>使用您的 TOTP 应用扫描</CardDescription>
               </CardHeader>
               <CardContent className="flex-1">
                 <div className="bg-white p-4 rounded-md flex items-center justify-center min-h-[300px]">
