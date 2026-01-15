@@ -46,6 +46,11 @@ export function setAccessToken(token: string): void {
   localStorage.setItem('access_token', token);
 }
 
+export function setRefreshToken(token: string): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem('refresh_token', token);
+}
+
 export function clearAccessToken(): void {
   if (typeof window === 'undefined') return;
   localStorage.removeItem('access_token');

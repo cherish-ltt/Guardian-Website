@@ -18,7 +18,13 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { API_ENDPOINTS } from "@/lib/config";
-import { post, ApiError, setAccessToken, type LoginResponse } from "@/lib/api";
+import {
+  post,
+  ApiError,
+  setAccessToken,
+  type LoginResponse,
+  setRefreshToken,
+} from "@/lib/api";
 
 interface LoginFormData {
   username: string;
@@ -79,6 +85,7 @@ export function LoginForm({
       const response: LoginResponse = await post(API_ENDPOINTS.LOGIN, payload);
 
       setAccessToken(response.access_token);
+      setRefreshToken(response.refresh_token);
 
       if (show2FA && formData.two_fa_code) {
         window.location.href = "/dashboard";
