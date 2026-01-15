@@ -7,5 +7,11 @@ export const API_ENDPOINTS = {
   TWO_FACTOR_SETUP: '/auth/2fa/setup',
   TWO_FACTOR_VERIFY: '/auth/2fa/verify',
   TWO_FACTOR_DISABLE: '/auth/2fa/disable',
-  ADMIN_CREATE: '/admins',
+  CHANGE_PASSWORD: '/auth/change-password',
+  RESET_PASSWORD: '/auth/reset-password',
+  SYSTEM_INFO: '/systeminfo',
+  ADMINS: '/admins',
+  ROLES: '/roles',
+  PERMISSIONS: '/permissions',
+  PERMISSIONS_TREE: '/permissions/tree',
 } as const;
