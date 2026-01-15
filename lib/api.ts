@@ -367,3 +367,139 @@ export async function updateAdmin(id: string, data: {
 export async function deleteAdmin(id: string): Promise<ApiResponse<null>> {
   return deleteWithAuth(`${API_ENDPOINTS.ADMINS}/${id}`);
 }
+
+export interface RoleInfo {
+  id: string
+  code: string
+  name: string
+  description: string | null
+  resource_type: string | null
+  http_method: string | null
+  resource_path: string | null
+  parent_id: string | null
+  sort_order: number | null
+  created_at: string
+  updated_at: string
+}
+
+export interface PermissionInfo {
+  id: string
+  code: string
+  name: string
+  description: string | null
+  resource_type: string | null
+  http_method: string | null
+  resource_path: string | null
+  parent_id: string | null
+  sort_order: number | null
+  created_at: string
+  updated_at: string
+}
+
+export interface PermissionTreeNode extends PermissionInfo {
+  children: PermissionTreeNode[]
+}
+
+export async function getRoles(params?: {
+  page?: number;
+  page_size?: number;
+  keyword?: string;
+}): Promise<ApiResponse<{ total: number; page: number; page_size: number; list: RoleInfo[] }>> {
+  const query = new URLSearchParams();
+  if (params?.page) query.append('page', params.page.toString());
+  if (params?.page_size) query.append('page_size', params.page_size.toString());
+  if (params?.keyword) query.append('keyword', params.keyword);
+  const queryString = query.toString();
+  return getWithAuth(`${API_ENDPOINTS.ROLES}${queryString ? `?${queryString}` : ''}`);
+}
+
+export async function getRole(id: string): Promise<ApiResponse<RoleInfo>> {
+  return getWithAuth(`${API_ENDPOINTS.ROLES}/${id}`);
+}
+
+export async function createRole(data: {
+  code: string;
+  name: string;
+  description?: string;
+  resource_type?: string;
+  http_method?: string;
+  resource_path?: string;
+  parent_id?: string;
+  sort_order?: number;
+}): Promise<ApiResponse<RoleInfo>> {
+  return postWithAuth(API_ENDPOINTS.ROLES, data);
+}
+
+export async function updateRole(id: string, data: {
+  code?: string;
+  name?: string;
+  description?: string;
+  resource_type?: string;
+  http_method?: string;
+  resource_path?: string;
+  parent_id?: string;
+  sort_order?: number;
+}): Promise<ApiResponse<RoleInfo>> {
+  return putWithAuth(`${API_ENDPOINTS.ROLES}/${id}`, data);
+}
+
+export async function deleteRole(id: string): Promise<ApiResponse<null>> {
+  return deleteWithAuth(`${API_ENDPOINTS.ROLES}/${id}`);
+}
+
+export async function getPermissions(params?: {
+  page?: number;
+  page_size?: number;
+  resource_type?: string;
+  keyword?: string;
+}): Promise<ApiResponse<{ total: number; page: number; page_size: number; list: PermissionInfo[] }>> {
+  const query = new URLSearchParams();
+  if (params?.page) query.append('page', params.page.toString());
+  if (params?.page_size) query.append('page_size', params.page_size.toString());
+  if (params?.resource_type) query.append('resource_type', params.resource_type);
+  if (params?.keyword) query.append('keyword', params.keyword);
+  const queryString = query.toString();
+  return getWithAuth(`${API_ENDPOINTS.PERMISSIONS}${queryString ? `?${queryString}` : ''}`);
+}
+
+export async function getPermissionsTree(): Promise<ApiResponse<PermissionTreeNode[]>> {
+  return getWithAuth(API_ENDPOINTS.PERMISSIONS_TREE);
+}
+
+export async function getPermission(id: string): Promise<ApiResponse<PermissionInfo>> {
+  return getWithAuth(`${API_ENDPOINTS.PERMISSIONS}/${id}`);
+}
+
+export async function createPermission(data: {
+  code: string;
+  name: string;
+  description?: string;
+  resource_type?: string;
+  http_method?: string;
+  resource_path?: string;
+  parent_id?: string;
+  sort_order?: number;
+}): Promise<ApiResponse<PermissionInfo>> {
+  return postWithAuth(API_ENDPOINTS.PERMISSIONS, data);
+}
+
+export async function updatePermission(id: string, data: {
+  code?: string;
+  name?: string;
+  description?: string;
+  resource_type?: string;
+  http_method?: string;
+  resource_path?: string;
+  parent_id?: string;
+  sort_order?: number;
+}): Promise<ApiResponse<PermissionInfo>> {
+  return putWithAuth(`${API_ENDPOINTS.PERMISSIONS}/${id}`, data);
+}
+
+export async function deletePermission(id: string): Promise<ApiResponse<null>> {
+  return deleteWithAuth(`${API_ENDPOINTS.PERMISSIONS}/${id}`);
+}
+
+export async function assignPermissionsToRole(roleId: string, permissionIds: string[]): Promise<ApiResponse<null>> {
+  return postWithAuth(`${API_ENDPOINTS.ROLES}/${roleId}/permissions`, { permission_ids: permissionIds });
+}
