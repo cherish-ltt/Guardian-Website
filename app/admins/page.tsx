@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
 import {
@@ -27,9 +28,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { getAdmins, createAdmin, deleteAdmin, ApiError, type AdminInfo } from "@/lib/api"
+import { getAdmins, createAdmin, deleteAdmin, ApiError, getAccessToken, type AdminInfo } from "@/lib/api"
 
 export default function AdminsPage() {
+  const router = useRouter()
   const [admins, setAdmins] = useState<AdminInfo[]>([])
   const [loading, setLoading] = useState(false)
   const [total, setTotal] = useState(0)
@@ -37,6 +39,14 @@ export default function AdminsPage() {
   const [pageSize, setPageSize] = useState(20)
   const [keyword, setKeyword] = useState("")
   const [status, setStatus] = useState<number | undefined>(undefined)
+
+  useEffect(() => {
+    const token = getAccessToken()
+    if (!token) {
+      router.push('/login')
+      return
+    }
+  }, [router])
 
   const fetchAdmins = async () => {
     setLoading(true)
@@ -61,7 +71,10 @@ export default function AdminsPage() {
   }
 
   useEffect(() => {
-    fetchAdmins()
+    const token = getAccessToken()
+    if (token) {
+      fetchAdmins()
+    }
   }, [currentPage, pageSize, status])
 
   const handleSearch = () => {

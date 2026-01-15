@@ -24,6 +24,7 @@ import {
   setAccessToken,
   type LoginResponse,
   setRefreshToken,
+  type LoginRequest,
 } from "@/lib/api";
 
 interface LoginFormData {
@@ -73,7 +74,7 @@ export function LoginForm({
     setError(null);
 
     try {
-      const payload: any = {
+      const payload: LoginRequest & { two_fa_code?: string } = {
         username: formData.username,
         password: formData.password,
       };

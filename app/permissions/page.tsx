@@ -1,5 +1,7 @@
 "use client"
 
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
 import {
@@ -17,8 +19,18 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { toast } from "sonner"
+import { getAccessToken } from "@/lib/api"
 
 export default function PermissionsPage() {
+  const router = useRouter()
+
+  useEffect(() => {
+    const token = getAccessToken()
+    if (!token) {
+      router.push('/login')
+    }
+  }, [router])
+
   return (
     <SidebarProvider
       style={
