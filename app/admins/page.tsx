@@ -45,6 +45,7 @@ interface AdminFormData {
   is_super_admin: boolean
   status: number
   role_ids?: string[]
+  permission_ids?: string[]
 }
 
 export default function AdminsPage() {
@@ -64,6 +65,7 @@ export default function AdminsPage() {
     is_super_admin: false,
     status: 1,
     role_ids: [],
+    permission_ids: [],
   })
   const [formLoading, setFormLoading] = useState(false)
 
@@ -136,6 +138,7 @@ export default function AdminsPage() {
       is_super_admin: false,
       status: 1,
       role_ids: [],
+      permission_ids: [],
     })
     setDialogOpen(true)
   }
@@ -148,6 +151,7 @@ export default function AdminsPage() {
       is_super_admin: admin.is_super_admin,
       status: admin.status,
       role_ids: [],
+      permission_ids: [],
     })
     setDialogOpen(true)
   }
@@ -190,9 +194,11 @@ export default function AdminsPage() {
           status: number
           role_ids?: string[]
           password?: string
+          permission_ids?: string[]
         } = {
           status: formData.status,
           role_ids: formData.role_ids,
+          permission_ids: formData.permission_ids,
         }
         if (formData.password) {
           if (formData.password.length < 6) {

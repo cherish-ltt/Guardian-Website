@@ -42,6 +42,7 @@ interface RoleFormData {
   code: string
   name: string
   description: string
+  permission_ids?: string[]
 }
 
 export default function RolesPage() {
@@ -129,6 +130,7 @@ export default function RolesPage() {
       code: "",
       name: "",
       description: "",
+      permission_ids: [],
     })
     setDialogOpen(true)
   }
@@ -140,6 +142,7 @@ export default function RolesPage() {
       code: role.code,
       name: role.name,
       description: role.description || "",
+      permission_ids: [],
     })
     setDialogOpen(true)
   }
@@ -181,6 +184,7 @@ export default function RolesPage() {
           code: formData.code,
           name: formData.name,
           description: formData.description,
+          permission_ids: formData.permission_ids,
         })
         toast.success("更新成功")
       }
@@ -223,6 +227,22 @@ export default function RolesPage() {
                 <div className="flex items-center justify-between">
                   <h1 className="text-2xl font-bold">角色管理</h1>
                   <Button onClick={handleCreate}>添加角色</Button>
+                </div>
+
+                <div className="flex gap-4">
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="keyword">搜索</Label>
+                    <Input
+                      id="keyword"
+                      value={keyword}
+                      onChange={(e) => setKeyword(e.target.value)}
+                      placeholder="角色代码或名称"
+                      className="w-48"
+                    />
+                    <Button onClick={handleSearch} disabled={loading}>
+                      搜索
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="rounded-lg border">

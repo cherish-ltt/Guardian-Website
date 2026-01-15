@@ -430,6 +430,7 @@ export async function updateRole(id: string, data: {
   code?: string;
   name?: string;
   description?: string;
+  permission_ids?: string[];
 }): Promise<RoleInfo> {
   return putWithAuth(`${API_ENDPOINTS.ROLES}/${id}`, data);
 }
