@@ -1,10 +1,10 @@
 # 
 
 <div align="center">
-  <h1>Guardian Auth API v1.0</h1>
+  <h1>Guardian Auth API v1.1</h1>
   <p>
-  <a href="https://img.shields.io/badge/version-v1.0-blue.svg">
-    <img src="https://img.shields.io/badge/version-v1.0-blue.svg" alt="license"/>
+  <a href="https://img.shields.io/badge/version-v1.1-blue.svg">
+    <img src="https://img.shields.io/badge/version-v1.1-blue.svg" alt="license"/>
   </a>
   <a href="https://img.shields.io/badge/status-stable-green.svg">
     <img src="https://img.shields.io/badge/status-stable-green.svg" alt="license"/>
@@ -24,13 +24,14 @@
 - [管理员接口](#管理员接口-待实现)
 - [角色接口](#角色接口-待实现)
 - [权限接口](#权限接口-待实现)
+- [系统信息接口](#系统信息接口)
 - [错误码](#错误码)
 
 ---
 
 ## 概述
 
-Guardian API v1.0 提供了完整的用户认证、权限管理和操作审计功能。
+Guardian API v1.1 提供了完整的用户认证、权限管理、操作审计和系统监控功能。
 
 **Base URL**: `http://localhost:6123/guardian-auth/v1`
 
@@ -353,6 +354,151 @@ curl -X POST http://localhost:6123/guardian-auth/v1/auth/2fa/verify \
 - 如果未启用 2FA，会返回错误（17009: 未启用2FA）
 - 验证码有效期为 30 秒
 - 验证失败不会锁定账户
+
+---
+
+### 重置密码（通过 2FA）
+
+**接口描述**: 使用用户名和 2FA 验证码重置密码（无需登录）
+
+**请求方式**: `POST`
+
+**请求路径**: `/auth/reset-password`
+
+**认证**: 无需认证（公开接口）
+
+**请求头**:
+```
+Content-Type: application/json
+```
+
+**请求参数**:
+
+| 参数名 | 类型 | 必填 | 说明 |
+|--------|------|--------|------|
+| username | string | 是 | 用户名 |
+| two_fa_code | string | 是 | 6位数字的 TOTP 验证码 |
+| new_password | string | 是 | 新密码 |
+
+**请求示例**:
+
+```bash
+curl -X POST http://localhost:6123/guardian-auth/v1/auth/reset-password \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "admin",
+    "two_fa_code": "123456",
+    "new_password": "NewSecurePassword123"
+  }'
+```
+
+**响应示例**:
+
+```json
+{
+  "code": 200,
+  "msg": "密码重置成功",
+  "data": null
+}
+```
+
+**错误响应示例**:
+
+用户不存在：
+```json
+{
+  "code": 17005,
+  "msg": "用户不存在",
+  "data": null
+}
+```
+
+未启用 2FA：
+```json
+{
+  "code": 17009,
+  "msg": "未启用2FA，无法通过此方式重置密码",
+  "data": null
+}
+```
+
+2FA 验证码错误：
+```json
+{
+  "code": 17008,
+  "msg": "无效的2FA验证码",
+  "data": null
+}
+```
+
+**业务规则**:
+- 账户必须启用 2FA 才能使用此接口
+- 2FA 验证码有效期为 30 秒
+- 新密码会使用 Argon2 算法哈希后存储
+- 密码重置后会自动更新 `updated_at` 时间戳
+- 此接口无需 JWT token，适用于忘记密码场景
+
+---
+
+### 修改密码（需要登录）
+
+**接口描述**: 登录后修改自己的密码（需要 JWT 认证）
+
+**请求方式**: `POST`
+
+**请求路径**: `/auth/change-password`
+
+**认证**: 需要 JWT
+
+**请求头**:
+```
+Content-Type: application/json
+Authorization: Bearer <access_token>
+```
+
+**请求参数**:
+
+| 参数名 | 类型 | 必填 | 说明 |
+|--------|------|--------|------|
+| new_password | string | 是 | 新密码（将进行 Argon2 哈希） |
+
+**请求示例**:
+
+```bash
+curl -X POST http://localhost:6123/guardian-auth/v1/auth/change-password \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <access_token>" \
+  -d '{
+    "new_password": "NewSecurePassword456"
+  }'
+```
+
+**响应示例**:
+
+```json
+{
+  "code": 200,
+  "msg": "密码修改成功",
+  "data": null
+}
+```
+
+**错误响应示例**:
+
+```json
+{
+  "code": 17000,
+  "msg": "管理员不存在",
+  "data": null
+}
+```
+
+**业务规则**:
+- 需要先登录获取 JWT token
+- 从 JWT token 中自动提取用户 ID
+- 新密码会使用 Argon2 算法哈希后存储
+- 密码修改后会自动更新 `updated_at` 时间戳
+- 此接口不需要验证旧密码（适用于已认证用户主动修改密码）
 
 ---
 
@@ -890,6 +1036,87 @@ GET /guardian-auth/v1/permissions?page=1&page_size=20&resource_type=api
 
 ---
 
+## 系统信息接口
+
+### 查询系统信息列表
+
+**接口描述**: 获取系统监控信息列表，包括 CPU、内存、磁盘和网络使用情况
+
+**请求方式**: `GET`
+
+**请求路径**: `/systeminfo`
+
+**认证**: 需要 JWT
+
+**查询参数**:
+
+| 参数名 | 类型 | 必填 | 默认值 | 说明 |
+|--------|------|--------|--------|------|
+| limit | number | 否 | 6 | 返回记录数量限制 |
+
+**请求示例**:
+
+```
+GET /guardian-auth/v1/systeminfo?limit=10
+```
+
+**响应示例**:
+
+```json
+{
+  "code": 200,
+  "msg": null,
+  "data": [
+    {
+      "id": "0190a1e8-7b3e-7a3f-8c1a-9e2f3a4b5c6d",
+      "cpu_count": 8,
+      "cpu_total_load": 45.50,
+      "memory_used": 8589934592,
+      "memory_total": 17179869184,
+      "disk_used": 549755813888,
+      "disk_total": 1099511627776,
+      "network_upload": 104857600,
+      "network_download": 524288000,
+      "created_at": "2024-01-15T17:30:00Z"
+    },
+    {
+      "id": "0190b2f9-8c4f-8b4g-9d2b-0f3g4b5c6d7e",
+      "cpu_count": 8,
+      "cpu_total_load": 42.30,
+      "memory_used": 8388608000,
+      "memory_total": 17179869184,
+      "disk_used": 549755813888,
+      "disk_total": 1099511627776,
+      "network_upload": 104857600,
+      "network_download": 524288000,
+      "created_at": "2024-01-15T17:25:00Z"
+    }
+  ]
+}
+```
+
+**响应字段说明**:
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| id | UUID | 系统信息记录 ID |
+| cpu_count | integer | CPU 核心数 |
+| cpu_total_load | decimal | CPU 总负载率（0-100） |
+| memory_used | integer | 已使用内存（字节） |
+| memory_total | integer | 总内存（字节） |
+| disk_used | integer | 已使用磁盘空间（字节） |
+| disk_total | integer | 总磁盘空间（字节） |
+| network_upload | integer | 网络上传流量（字节） |
+| network_download | integer | 网络下载流量（字节） |
+| created_at | datetime | 记录创建时间（ISO 8601 格式） |
+
+**业务规则**:
+- 数据按创建时间倒序排列（最新的在最前）
+- 默认返回最近 6 条记录
+- 系统信息由后台定时任务自动采集和存储
+
+---
+
 ## 错误码
 
 | 状态码 | 说明 |
@@ -972,6 +1199,13 @@ curl http://localhost:6123/guardian-auth/v1/admins?page=1&page_size=20 \
   -H "Authorization: Bearer <your_access_token>"
 ```
 
+#### 查询系统信息
+
+```bash
+curl http://localhost:6123/guardian-auth/v1/systeminfo?limit=10 \
+  -H "Authorization: Bearer <your_access_token>"
+```
+
 ---
 
 ## 附录
@@ -1002,6 +1236,22 @@ curl http://localhost:6123/guardian-auth/v1/admins?page=1&page_size=20 \
 ---
 
 ## 更新日志
+
+### v1.1.1 (2026-01-15)
+- ✅ 新增重置密码接口（`/auth/reset-password`）- 通过 2FA 重置密码
+- ✅ 新增修改密码接口（`/auth/change-password`）- 登录后直接修改密码
+- ✅ 重置密码接口为公开接口（无需 JWT 认证）
+- ✅ 修改密码接口为受保护接口（需要 JWT 认证）
+- ✅ 两个接口都使用 Argon2 密码哈希加密
+- 📝 更新 API 文档，添加两个密码相关接口说明
+
+### v1.1.0 (2026-01-15)
+- ✅ 新增系统信息接口（`/systeminfo`）
+- ✅ 新增 guardian_systeminfo 数据表
+- ✅ 支持查询系统 CPU、内存、磁盘、网络监控数据
+- ✅ 系统信息按时间倒序排列
+- ✅ 支持自定义返回记录数量（limit 参数）
+- 📝 更新 API 文档，添加系统信息接口说明
 
 ### v1.0.0 (2026-01-14)
 - ✅ 实现基础认证功能（登录、登出、刷新令牌）

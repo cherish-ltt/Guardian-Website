@@ -1,8 +1,14 @@
+"use client";
+
+import { useState } from "react";
 import { GalleryVerticalEnd } from "lucide-react";
 
 import { LoginForm } from "@/components/login-form";
+import { ResetPasswordDialog } from "@/components/reset-password-dialog";
 
 export default function LoginPage() {
+  const [showResetPassword, setShowResetPassword] = useState(false);
+
   return (
     <div className="grid min-h-svh lg:grid-cols-2">
       <div className="bg-muted relative hidden lg:block">
@@ -24,10 +30,20 @@ export default function LoginPage() {
         <div className="flex flex-1 items-center justify-center">
           <div className="w-full max-w-xs">
             <LoginForm />
+            <button
+              type="button"
+              onClick={() => setShowResetPassword(true)}
+              className="text-sm text-muted-foreground hover:text-foreground underline-offset-4 hover:underline mt-4"
+            >
+              忘记密码？
+            </button>
+            <ResetPasswordDialog
+              isOpen={showResetPassword}
+              onClose={() => setShowResetPassword(false)}
+            />
           </div>
         </div>
       </div>
-      
     </div>
   );
 }

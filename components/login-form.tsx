@@ -18,7 +18,14 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { API_ENDPOINTS } from "@/lib/config";
-import { post, ApiError, setAccessToken, type LoginResponse } from "@/lib/api";
+import {
+  post,
+  ApiError,
+  setAccessToken,
+  type LoginResponse,
+  setRefreshToken,
+  type LoginRequest,
+} from "@/lib/api";
 
 interface LoginFormData {
   username: string;
@@ -67,11 +74,12 @@ export function LoginForm({
     setError(null);
 
     try {
-      const payload: any = {
+      const payload: LoginRequest & { two_fa_code?: string } = {
         username: formData.username,
         password: formData.password,
       };
 
+      // 如果已显示2FA输入框且用户输入了验证码，则提交验证码
       if (show2FA && formData.two_fa_code) {
         payload.two_fa_code = formData.two_fa_code;
       }
@@ -79,17 +87,26 @@ export function LoginForm({
       const response: LoginResponse = await post(API_ENDPOINTS.LOGIN, payload);
 
       setAccessToken(response.access_token);
+      setRefreshToken(response.refresh_token);
 
+      // 登录成功后的跳转逻辑
       if (show2FA && formData.two_fa_code) {
+        // 输入了2FA验证码且登录成功，直接进入dashboard
         window.location.href = "/dashboard";
       } else {
+        // 没有输入2FA验证码，跳转到2fa页面
         window.location.href = "/2fa";
       }
     } catch (err) {
       if (err instanceof ApiError) {
         if (err.code === 17007 || err.code === 17008) {
+          // 2FA验证失败，显示2FA输入框
           setShow2FA(true);
           setError(err.message || "需要 2FA 验证");
+        } else if (err.code === 17009) {
+          // 未启用2FA，但后端需要2FA，显示2FA输入框
+          setShow2FA(true);
+          setError(err.message || "账户需要 2FA 验证");
         } else {
           setError(err.message || "登录失败");
         }
