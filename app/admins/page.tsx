@@ -36,8 +36,9 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
+import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "sonner"
-import { getAdmins, createAdmin, updateAdmin, deleteAdmin, ApiError, getAccessToken, type AdminInfo } from "@/lib/api"
+import { getAdmins, createAdmin, updateAdmin, deleteAdmin, getRoles, getAdmin, assignRolesToAdmin, ApiError, getAccessToken, type AdminInfo, type RoleInfo } from "@/lib/api"
 
 interface AdminFormData {
   username: string
@@ -56,6 +57,7 @@ export default function AdminsPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [keyword, setKeyword] = useState("")
   const [status, setStatus] = useState<number | undefined>(undefined)
+  const [roles, setRoles] = useState<RoleInfo[]>([])
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [dialogMode, setDialogMode] = useState<"create" | "edit">("create")
@@ -103,9 +105,22 @@ export default function AdminsPage() {
     const token = getAccessToken()
     if (token) {
       fetchAdmins()
+      fetchRoles()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, status])
+
+  const fetchRoles = async () => {
+    try {
+      const response = await getRoles({
+        page: 1,
+        page_size: 1000,
+      })
+      setRoles(response.list)
+    } catch (err) {
+      console.error("获取角色列表失败", err)
+    }
+  }
 
   const handleSearch = () => {
     setCurrentPage(1)
@@ -194,11 +209,8 @@ export default function AdminsPage() {
           status: number
           role_ids?: string[]
           password?: string
-          permission_ids?: string[]
         } = {
           status: formData.status,
-          role_ids: formData.role_ids,
-          permission_ids: formData.permission_ids,
         }
         if (formData.password) {
           if (formData.password.length < 6) {
@@ -209,6 +221,11 @@ export default function AdminsPage() {
           updateData.password = formData.password
         }
         await updateAdmin(editingAdmin.id, updateData)
+
+        if (!formData.is_super_admin && formData.role_ids) {
+          await assignRolesToAdmin(editingAdmin.id, formData.role_ids)
+        }
+
         toast.success("更新成功")
       }
 
@@ -218,6 +235,7 @@ export default function AdminsPage() {
         is_super_admin: false,
         status: 1,
         role_ids: [],
+        permission_ids: [],
       })
       fetchAdmins()
     } catch (err) {
@@ -290,20 +308,23 @@ export default function AdminsPage() {
                         <TableHead>类型</TableHead>
                         <TableHead>状态</TableHead>
                         <TableHead>最后登录</TableHead>
+                        <TableHead>登录失败</TableHead>
+                        <TableHead>锁定状态</TableHead>
                         <TableHead>创建时间</TableHead>
+                        <TableHead>更新时间</TableHead>
                         <TableHead>操作</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {loading ? (
+                       {loading ? (
                         <TableRow>
-                          <TableCell colSpan={6} className="text-center">
+                          <TableCell colSpan={9} className="text-center">
                             加载中...
                           </TableCell>
                         </TableRow>
                       ) : admins.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={6} className="text-center">
+                          <TableCell colSpan={9} className="text-center">
                             暂无数据
                           </TableCell>
                         </TableRow>
@@ -329,7 +350,20 @@ export default function AdminsPage() {
                                 : "未登录"}
                             </TableCell>
                             <TableCell>
+                              {admin.login_attempts !== undefined ? admin.login_attempts : 0}
+                            </TableCell>
+                            <TableCell>
+                              {admin.locked_until
+                                ? new Date(admin.locked_until).toLocaleString("zh-CN")
+                                : "未锁定"}
+                            </TableCell>
+                            <TableCell>
                               {new Date(admin.created_at).toLocaleString("zh-CN")}
+                            </TableCell>
+                            <TableCell>
+                              {admin.updated_at
+                                ? new Date(admin.updated_at).toLocaleString("zh-CN")
+                                : "-"}
                             </TableCell>
                             <TableCell>
                               <div className="flex gap-2">
@@ -443,6 +477,34 @@ export default function AdminsPage() {
                     <SelectItem value="0">禁用</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>角色</Label>
+                <div className="rounded-md border p-4 max-h-48 overflow-y-auto">
+                  {roles.map((role) => (
+                    <div key={role.id} className="flex items-center space-x-2 mb-2">
+                      <Checkbox
+                        id={`role-${role.id}`}
+                        checked={formData.role_ids?.includes(role.id) || false}
+                        onCheckedChange={(checked) => {
+                          const newRoleIds = checked
+                            ? [...(formData.role_ids || []), role.id]
+                            : (formData.role_ids || []).filter((id) => id !== role.id)
+                          setFormData({ ...formData, role_ids: newRoleIds })
+                        }}
+                        disabled={formLoading || formData.is_super_admin}
+                      />
+                      <label htmlFor={`role-${role.id}`} className="text-sm">
+                        {role.name} ({role.code})
+                      </label>
+                    </div>
+                  ))}
+                  {roles.length === 0 && <div className="text-sm text-muted-foreground">暂无角色</div>}
+                </div>
+                {formData.is_super_admin && (
+                  <p className="text-xs text-muted-foreground">超级管理员不需要分配角色</p>
+                )}
               </div>
             </div>
             <DialogFooter>

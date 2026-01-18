@@ -45,7 +45,10 @@ export interface AdminInfo {
   is_super_admin: boolean;
   status: number;
   last_login_at?: string;
+  login_attempts?: number;
+  locked_until?: string | null;
   created_at: string;
+  updated_at?: string;
 }
 
 export class ApiError extends Error {
@@ -347,6 +350,10 @@ export async function getAdmins(params?: {
   return getWithAuth(url);
 }
 
+export async function getAdmin(id: string): Promise<AdminInfo> {
+  return getWithAuth(`${API_ENDPOINTS.ADMINS}/${id}`);
+}
+
 export async function createAdmin(data: {
   username: string;
   password: string;
@@ -366,6 +373,10 @@ export async function updateAdmin(id: string, data: {
 
 export async function deleteAdmin(id: string): Promise<null> {
   return deleteWithAuth(`${API_ENDPOINTS.ADMINS}/${id}`);
+}
+
+export async function assignRolesToAdmin(adminId: string, roleIds: string[]): Promise<null> {
+  return postWithAuth(`${API_ENDPOINTS.ADMINS}/${adminId}/roles`, { role_ids: roleIds });
 }
 
 export interface RoleInfo {
@@ -388,6 +399,7 @@ export interface PermissionInfo {
   resource_path: string | null
   parent_id: string | null
   sort_order: number | null
+  is_system: boolean | null
   created_at: string
   updated_at: string
 }

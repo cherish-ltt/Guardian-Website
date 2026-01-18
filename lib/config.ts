@@ -1,4 +1,4 @@
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:6123/guardian-auth/v1';
+export const API_BASE_URL = process.env.NEXTJS_API_BASE_URL || 'http://localhost:6123/guardian-auth/v1';
 
 export const API_ENDPOINTS = {
   LOGIN: '/auth/login',
