@@ -39,6 +39,12 @@ export interface SystemInfo {
   created_at: string;
 }
 
+export interface RoleRef {
+  id: string;
+  code: string;
+  name: string;
+}
+
 export interface AdminInfo {
   id: string;
   username: string;
@@ -49,6 +55,7 @@ export interface AdminInfo {
   locked_until?: string | null;
   created_at: string;
   updated_at?: string;
+  roles?: RoleRef[];
 }
 
 export class ApiError extends Error {
@@ -411,6 +418,12 @@ export async function assignRolesToAdmin(adminId: string, roleIds: string[]): Pr
   return postWithAuth(`${API_ENDPOINTS.ADMINS}/${adminId}/roles`, { role_ids: roleIds });
 }
 
+export interface PermissionRef {
+  id: string;
+  code: string;
+  name: string;
+}
+
 export interface RoleInfo {
   id: string
   code: string
@@ -419,6 +432,7 @@ export interface RoleInfo {
   is_system: boolean | null
   created_at: string
   updated_at: string
+  permissions?: PermissionRef[];
 }
 
 export interface PermissionInfo {

@@ -200,7 +200,14 @@ export default function PermissionsPage() {
         })
         toast.success("创建成功")
       } else if (dialogMode === "edit" && editingPermission) {
-        const updateData: any = {
+        const updateData: {
+          name: string;
+          description?: string;
+          resource_type: string;
+          http_method?: string;
+          resource_path?: string;
+          sort_order?: number;
+        } = {
           name: formData.name,
           description: formData.description,
           resource_type: formData.resource_type,
@@ -294,27 +301,20 @@ export default function PermissionsPage() {
                       <TableRow>
                         <TableHead>权限代码</TableHead>
                         <TableHead>权限名称</TableHead>
-                        <TableHead>描述</TableHead>
                         <TableHead>资源类型</TableHead>
-                        <TableHead>HTTP 方法</TableHead>
-                        <TableHead>资源路径</TableHead>
-                        <TableHead>排序</TableHead>
-                        <TableHead>类型</TableHead>
-                        <TableHead>创建时间</TableHead>
-                        <TableHead>更新时间</TableHead>
                         <TableHead>操作</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {loading ? (
                         <TableRow>
-                          <TableCell colSpan={11} className="text-center">
+                          <TableCell colSpan={4} className="text-center">
                             加载中...
                           </TableCell>
                         </TableRow>
                       ) : permissions.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={11} className="text-center">
+                          <TableCell colSpan={4} className="text-center">
                             暂无数据
                           </TableCell>
                         </TableRow>
@@ -323,23 +323,8 @@ export default function PermissionsPage() {
                           <TableRow key={permission.id}>
                             <TableCell className="font-medium">{permission.code}</TableCell>
                             <TableCell>{permission.name}</TableCell>
-                            <TableCell>{permission.description || "-"}</TableCell>
                             <TableCell>
                               <Badge variant="secondary">{permission.resource_type || "-"}</Badge>
-                            </TableCell>
-                            <TableCell>{permission.http_method || "-"}</TableCell>
-                            <TableCell>{permission.resource_path || "-"}</TableCell>
-                            <TableCell>{permission.sort_order ?? "-"}</TableCell>
-                            <TableCell>
-                              <Badge variant={permission.is_system ? "default" : "secondary"}>
-                                {permission.is_system ? "系统" : "自定义"}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              {new Date(permission.created_at).toLocaleString("zh-CN")}
-                            </TableCell>
-                            <TableCell>
-                              {new Date(permission.updated_at).toLocaleString("zh-CN")}
                             </TableCell>
                             <TableCell>
                               <div className="flex gap-2">

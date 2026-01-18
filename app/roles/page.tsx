@@ -28,13 +28,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "sonner"
 import { getAccessToken, getRoles, createRole, updateRole, deleteRole, getRole, getPermissionsTree, assignPermissionsToRole, ApiError, type RoleInfo, type PermissionTreeNode } from "@/lib/api"
@@ -95,6 +88,10 @@ export default function RolesPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [dialogMode, setDialogMode] = useState<"create" | "edit">("create")
   const [editingRole, setEditingRole] = useState<RoleInfo | null>(null)
+
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false)
+  const [viewingRole, setViewingRole] = useState<RoleInfo | null>(null)
+  const [detailLoading, setDetailLoading] = useState(false)
   const [formData, setFormData] = useState<RoleFormData>({
     code: "",
     name: "",
@@ -163,6 +160,25 @@ export default function RolesPage() {
     fetchRoles()
   }
 
+  const handleViewDetail = async (role: RoleInfo) => {
+    setDetailDialogOpen(true)
+    setDetailLoading(true)
+    setViewingRole(null)
+
+    try {
+      const roleDetail = await getRole(role.id)
+      setViewingRole(roleDetail)
+    } catch (err) {
+      if (err instanceof ApiError) {
+        toast.error(err.message || "获取角色详情失败")
+      } else {
+        toast.error("发生未知错误，请稍后重试")
+      }
+    } finally {
+      setDetailLoading(false)
+    }
+  }
+
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`确定要删除角色 "${name}" 吗？`)) {
       return
@@ -193,16 +209,31 @@ export default function RolesPage() {
     setDialogOpen(true)
   }
 
-  const handleEdit = (role: RoleInfo) => {
+  const handleEdit = async (role: RoleInfo) => {
     setDialogMode("edit")
     setEditingRole(role)
-    setFormData({
-      code: role.code,
-      name: role.name,
-      description: role.description || "",
-      permission_ids: [],
-    })
-    setDialogOpen(true)
+    setFormLoading(true)
+
+    try {
+      const roleDetail = await getRole(role.id)
+      const permissionIds = roleDetail.permissions?.map((p) => p.id) || []
+
+      setFormData({
+        code: roleDetail.code,
+        name: roleDetail.name,
+        description: roleDetail.description || "",
+        permission_ids: permissionIds,
+      })
+      setDialogOpen(true)
+    } catch (err) {
+      if (err instanceof ApiError) {
+        toast.error(err.message || "获取角色详情失败")
+      } else {
+        toast.error("发生未知错误，请稍后重试")
+      }
+    } finally {
+      setFormLoading(false)
+    }
   }
 
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -314,23 +345,20 @@ export default function RolesPage() {
                       <TableRow>
                         <TableHead>角色代码</TableHead>
                         <TableHead>角色名称</TableHead>
-                        <TableHead>描述</TableHead>
                         <TableHead>类型</TableHead>
-                        <TableHead>创建时间</TableHead>
-                        <TableHead>更新时间</TableHead>
                         <TableHead>操作</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {loading ? (
                         <TableRow>
-                          <TableCell colSpan={7} className="text-center">
+                          <TableCell colSpan={4} className="text-center">
                             加载中...
                           </TableCell>
                         </TableRow>
                       ) : roles.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={7} className="text-center">
+                          <TableCell colSpan={4} className="text-center">
                             暂无数据
                           </TableCell>
                         </TableRow>
@@ -339,20 +367,20 @@ export default function RolesPage() {
                           <TableRow key={role.id}>
                             <TableCell className="font-medium">{role.code}</TableCell>
                             <TableCell>{role.name}</TableCell>
-                            <TableCell>{role.description || "-"}</TableCell>
                             <TableCell>
                               <Badge variant={role.is_system ? "default" : "secondary"}>
                                 {role.is_system ? "系统角色" : "自定义"}
                               </Badge>
                             </TableCell>
                             <TableCell>
-                              {new Date(role.created_at).toLocaleString("zh-CN")}
-                            </TableCell>
-                            <TableCell>
-                              {new Date(role.updated_at).toLocaleString("zh-CN")}
-                            </TableCell>
-                            <TableCell>
                               <div className="flex gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleViewDetail(role)}
+                                >
+                                  详情
+                                </Button>
                                 <Button
                                   variant="ghost"
                                   size="sm"
@@ -404,6 +432,72 @@ export default function RolesPage() {
           </div>
         </SidebarInset>
       </SidebarProvider>
+      <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>角色详情</DialogTitle>
+            <DialogDescription>
+              查看角色的完整信息和权限绑定关系
+            </DialogDescription>
+          </DialogHeader>
+          {detailLoading ? (
+            <div className="py-8 text-center">加载中...</div>
+          ) : viewingRole ? (
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-muted-foreground">角色代码</Label>
+                  <div className="font-medium">{viewingRole.code}</div>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">角色名称</Label>
+                  <div>{viewingRole.name}</div>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">类型</Label>
+                  <div>
+                    <Badge variant={viewingRole.is_system ? "default" : "secondary"}>
+                      {viewingRole.is_system ? "系统角色" : "自定义"}
+                    </Badge>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">描述</Label>
+                  <div>{viewingRole.description || "-"}</div>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">创建时间</Label>
+                  <div>{new Date(viewingRole.created_at).toLocaleString("zh-CN")}</div>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">更新时间</Label>
+                  <div>{new Date(viewingRole.updated_at).toLocaleString("zh-CN")}</div>
+                </div>
+              </div>
+              <div>
+                <Label className="text-muted-foreground mb-2 block">绑定权限</Label>
+                <div className="rounded-md border p-4 max-h-64 overflow-y-auto">
+                  {viewingRole.permissions && viewingRole.permissions.length > 0 ? (
+                    <div className="space-y-2">
+                      {viewingRole.permissions.map((permission) => (
+                        <div key={permission.id} className="text-sm">
+                          {permission.name} ({permission.code})
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-sm text-muted-foreground">暂无绑定权限</div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : null}
+          <DialogFooter>
+            <Button onClick={() => setDetailDialogOpen(false)}>关闭</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
       <DialogContent>
         <DialogHeader>
