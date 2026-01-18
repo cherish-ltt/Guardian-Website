@@ -115,7 +115,11 @@ export default function RolesPage() {
       const tree = await getPermissionsTree()
       setPermissionsTree(tree)
     } catch (err) {
-      console.error("获取权限树失败", err)
+      if (err instanceof ApiError) {
+        toast.error(err.message || "获取权限树失败")
+      } else {
+        toast.error("发生未知错误，请稍后重试")
+      }
     }
   }
 

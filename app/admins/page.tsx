@@ -118,7 +118,11 @@ export default function AdminsPage() {
       })
       setRoles(response.list)
     } catch (err) {
-      console.error("获取角色列表失败", err)
+      if (err instanceof ApiError) {
+        toast.error(err.message || "获取角色列表失败")
+      } else {
+        toast.error("发生未知错误，请稍后重试")
+      }
     }
   }
 

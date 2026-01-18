@@ -158,7 +158,22 @@ async function refreshToken(): Promise<string> {
 
 async function handleResponse<T>(response: Response): Promise<T> {
   const contentType = response.headers.get('content-type');
-  
+
+  if (!response.ok) {
+    const httpStatus = response.status;
+    let errorMessage = '出错啦！请稍后再试。';
+
+    try {
+      const json = await response.json();
+      if (json.msg && json.msg.trim() !== '') {
+        errorMessage = json.msg;
+      }
+    } catch {
+    }
+
+    throw new ApiError(httpStatus, errorMessage);
+  }
+
   if (!contentType || !contentType.includes('application/json')) {
     throw new ApiError(0, 'Invalid response format');
   }
@@ -166,7 +181,8 @@ async function handleResponse<T>(response: Response): Promise<T> {
   const json: ApiResponse<T> = await response.json();
 
   if (json.code !== 200) {
-    throw new ApiError(json.code, json.msg || 'Request failed', json.data);
+    const errorMessage = (json.msg && json.msg.trim() !== '') ? json.msg : '出错啦！请稍后再试。';
+    throw new ApiError(json.code, errorMessage, json.data);
   }
 
   return json.data;
@@ -178,7 +194,22 @@ async function handleResponseWithRetry<T>(
   originalOptions: RequestInit
 ): Promise<T> {
   const contentType = response.headers.get('content-type');
-  
+
+  if (!response.ok) {
+    const httpStatus = response.status;
+    let errorMessage = '出错啦！请稍后再试。';
+
+    try {
+      const json = await response.json();
+      if (json.msg && json.msg.trim() !== '') {
+        errorMessage = json.msg;
+      }
+    } catch {
+    }
+
+    throw new ApiError(httpStatus, errorMessage);
+  }
+
   if (!contentType || !contentType.includes('application/json')) {
     throw new ApiError(0, 'Invalid response format');
   }
@@ -188,7 +219,7 @@ async function handleResponseWithRetry<T>(
   if (json.code === 17003 || json.code === 17002) {
     try {
       let newToken = '';
-      
+
       if (!isRefreshing) {
         isRefreshing = true;
         refreshPromise = refreshToken();
@@ -198,7 +229,7 @@ async function handleResponseWithRetry<T>(
       } else {
         newToken = await refreshPromise!;
       }
-      
+
       const retryResponse = await fetch(originalUrl, {
         ...originalOptions,
         headers: {
@@ -217,7 +248,8 @@ async function handleResponseWithRetry<T>(
   }
 
   if (json.code !== 200) {
-    throw new ApiError(json.code, json.msg || 'Request failed', json.data);
+    const errorMessage = (json.msg && json.msg.trim() !== '') ? json.msg : '出错啦！请稍后再试。';
+    throw new ApiError(json.code, errorMessage, json.data);
   }
 
   return json.data;
