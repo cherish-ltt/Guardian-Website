@@ -36,8 +36,9 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
+import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "sonner"
-import { getAdmins, createAdmin, updateAdmin, deleteAdmin, ApiError, getAccessToken, type AdminInfo } from "@/lib/api"
+import { getAdmins, createAdmin, updateAdmin, deleteAdmin, getRoles, getAdmin, assignRolesToAdmin, ApiError, getAccessToken, type AdminInfo, type RoleInfo } from "@/lib/api"
 
 interface AdminFormData {
   username: string
@@ -56,10 +57,15 @@ export default function AdminsPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [keyword, setKeyword] = useState("")
   const [status, setStatus] = useState<number | undefined>(undefined)
+  const [roles, setRoles] = useState<RoleInfo[]>([])
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [dialogMode, setDialogMode] = useState<"create" | "edit">("create")
   const [editingAdmin, setEditingAdmin] = useState<AdminInfo | null>(null)
+
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false)
+  const [viewingAdmin, setViewingAdmin] = useState<AdminInfo | null>(null)
+  const [detailLoading, setDetailLoading] = useState(false)
   const [formData, setFormData] = useState<AdminFormData>({
     username: "",
     is_super_admin: false,
@@ -103,9 +109,26 @@ export default function AdminsPage() {
     const token = getAccessToken()
     if (token) {
       fetchAdmins()
+      fetchRoles()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, status])
+
+  const fetchRoles = async () => {
+    try {
+      const response = await getRoles({
+        page: 1,
+        page_size: 1000,
+      })
+      setRoles(response.list)
+    } catch (err) {
+      if (err instanceof ApiError) {
+        toast.error(err.message || "获取角色列表失败")
+      } else {
+        toast.error("发生未知错误，请稍后重试")
+      }
+    }
+  }
 
   const handleSearch = () => {
     setCurrentPage(1)
@@ -130,6 +153,25 @@ export default function AdminsPage() {
     }
   }
 
+  const handleViewDetail = async (admin: AdminInfo) => {
+    setDetailDialogOpen(true)
+    setDetailLoading(true)
+    setViewingAdmin(null)
+
+    try {
+      const adminDetail = await getAdmin(admin.id)
+      setViewingAdmin(adminDetail)
+    } catch (err) {
+      if (err instanceof ApiError) {
+        toast.error(err.message || "获取管理员详情失败")
+      } else {
+        toast.error("发生未知错误，请稍后重试")
+      }
+    } finally {
+      setDetailLoading(false)
+    }
+  }
+
   const handleCreate = () => {
     setDialogMode("create")
     setEditingAdmin(null)
@@ -143,17 +185,32 @@ export default function AdminsPage() {
     setDialogOpen(true)
   }
 
-  const handleEdit = (admin: AdminInfo) => {
+  const handleEdit = async (admin: AdminInfo) => {
     setDialogMode("edit")
     setEditingAdmin(admin)
-    setFormData({
-      username: admin.username,
-      is_super_admin: admin.is_super_admin,
-      status: admin.status,
-      role_ids: [],
-      permission_ids: [],
-    })
-    setDialogOpen(true)
+    setFormLoading(true)
+
+    try {
+      const adminDetail = await getAdmin(admin.id)
+      const roleIds = adminDetail.roles?.map((r) => r.id) || []
+
+      setFormData({
+        username: adminDetail.username,
+        is_super_admin: adminDetail.is_super_admin,
+        status: adminDetail.status,
+        role_ids: roleIds,
+        permission_ids: [],
+      })
+      setDialogOpen(true)
+    } catch (err) {
+      if (err instanceof ApiError) {
+        toast.error(err.message || "获取管理员详情失败")
+      } else {
+        toast.error("发生未知错误，请稍后重试")
+      }
+    } finally {
+      setFormLoading(false)
+    }
   }
 
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -194,11 +251,8 @@ export default function AdminsPage() {
           status: number
           role_ids?: string[]
           password?: string
-          permission_ids?: string[]
         } = {
           status: formData.status,
-          role_ids: formData.role_ids,
-          permission_ids: formData.permission_ids,
         }
         if (formData.password) {
           if (formData.password.length < 6) {
@@ -209,6 +263,11 @@ export default function AdminsPage() {
           updateData.password = formData.password
         }
         await updateAdmin(editingAdmin.id, updateData)
+
+        if (!formData.is_super_admin && formData.role_ids) {
+          await assignRolesToAdmin(editingAdmin.id, formData.role_ids)
+        }
+
         toast.success("更新成功")
       }
 
@@ -218,6 +277,7 @@ export default function AdminsPage() {
         is_super_admin: false,
         status: 1,
         role_ids: [],
+        permission_ids: [],
       })
       fetchAdmins()
     } catch (err) {
@@ -289,21 +349,19 @@ export default function AdminsPage() {
                         <TableHead>用户名</TableHead>
                         <TableHead>类型</TableHead>
                         <TableHead>状态</TableHead>
-                        <TableHead>最后登录</TableHead>
-                        <TableHead>创建时间</TableHead>
                         <TableHead>操作</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {loading ? (
+                       {loading ? (
                         <TableRow>
-                          <TableCell colSpan={6} className="text-center">
+                          <TableCell colSpan={4} className="text-center">
                             加载中...
                           </TableCell>
                         </TableRow>
                       ) : admins.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={6} className="text-center">
+                          <TableCell colSpan={4} className="text-center">
                             暂无数据
                           </TableCell>
                         </TableRow>
@@ -324,15 +382,14 @@ export default function AdminsPage() {
                               </Badge>
                             </TableCell>
                             <TableCell>
-                              {admin.last_login_at
-                                ? new Date(admin.last_login_at).toLocaleString("zh-CN")
-                                : "未登录"}
-                            </TableCell>
-                            <TableCell>
-                              {new Date(admin.created_at).toLocaleString("zh-CN")}
-                            </TableCell>
-                            <TableCell>
                               <div className="flex gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleViewDetail(admin)}
+                                >
+                                  详情
+                                </Button>
                                 <Button
                                   variant="ghost"
                                   size="sm"
@@ -384,6 +441,100 @@ export default function AdminsPage() {
           </div>
         </SidebarInset>
       </SidebarProvider>
+
+      <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>管理员详情</DialogTitle>
+            <DialogDescription>
+              查看管理员的完整信息和角色绑定关系
+            </DialogDescription>
+          </DialogHeader>
+          {detailLoading ? (
+            <div className="py-8 text-center">加载中...</div>
+          ) : viewingAdmin ? (
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-muted-foreground">用户名</Label>
+                  <div className="font-medium">{viewingAdmin.username}</div>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">类型</Label>
+                  <div>
+                    {viewingAdmin.is_super_admin ? (
+                      <Badge variant="default">超级管理员</Badge>
+                    ) : (
+                      <Badge variant="secondary">管理员</Badge>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">状态</Label>
+                  <div>
+                    <Badge variant={viewingAdmin.status === 1 ? "default" : "destructive"}>
+                      {viewingAdmin.status === 1 ? "正常" : "禁用"}
+                    </Badge>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">最后登录</Label>
+                  <div>
+                    {viewingAdmin.last_login_at
+                      ? new Date(viewingAdmin.last_login_at).toLocaleString("zh-CN")
+                      : "未登录"}
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">登录失败次数</Label>
+                  <div>{viewingAdmin.login_attempts !== undefined ? viewingAdmin.login_attempts : 0}</div>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">锁定状态</Label>
+                  <div>
+                    {viewingAdmin.locked_until
+                      ? new Date(viewingAdmin.locked_until).toLocaleString("zh-CN")
+                      : "未锁定"}
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">创建时间</Label>
+                  <div>{new Date(viewingAdmin.created_at).toLocaleString("zh-CN")}</div>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">更新时间</Label>
+                  <div>
+                    {viewingAdmin.updated_at
+                      ? new Date(viewingAdmin.updated_at).toLocaleString("zh-CN")
+                      : "-"}
+                  </div>
+                </div>
+              </div>
+              {!viewingAdmin.is_super_admin && (
+                <div>
+                  <Label className="text-muted-foreground mb-2 block">绑定角色</Label>
+                  <div className="rounded-md border p-4">
+                    {viewingAdmin.roles && viewingAdmin.roles.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {viewingAdmin.roles.map((role) => (
+                          <Badge key={role.id} variant="outline">
+                            {role.name} ({role.code})
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-muted-foreground">暂无绑定角色</div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : null}
+          <DialogFooter>
+            <Button onClick={() => setDetailDialogOpen(false)}>关闭</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
@@ -443,6 +594,34 @@ export default function AdminsPage() {
                     <SelectItem value="0">禁用</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>角色</Label>
+                <div className="rounded-md border p-4 max-h-48 overflow-y-auto">
+                  {roles.map((role) => (
+                    <div key={role.id} className="flex items-center space-x-2 mb-2">
+                      <Checkbox
+                        id={`role-${role.id}`}
+                        checked={formData.role_ids?.includes(role.id) || false}
+                        onCheckedChange={(checked) => {
+                          const newRoleIds = checked
+                            ? [...(formData.role_ids || []), role.id]
+                            : (formData.role_ids || []).filter((id) => id !== role.id)
+                          setFormData({ ...formData, role_ids: newRoleIds })
+                        }}
+                        disabled={formLoading || formData.is_super_admin}
+                      />
+                      <label htmlFor={`role-${role.id}`} className="text-sm">
+                        {role.name} ({role.code})
+                      </label>
+                    </div>
+                  ))}
+                  {roles.length === 0 && <div className="text-sm text-muted-foreground">暂无角色</div>}
+                </div>
+                {formData.is_super_admin && (
+                  <p className="text-xs text-muted-foreground">超级管理员不需要分配角色</p>
+                )}
               </div>
             </div>
             <DialogFooter>

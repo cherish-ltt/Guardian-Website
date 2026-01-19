@@ -39,13 +39,23 @@ export interface SystemInfo {
   created_at: string;
 }
 
+export interface RoleRef {
+  id: string;
+  code: string;
+  name: string;
+}
+
 export interface AdminInfo {
   id: string;
   username: string;
   is_super_admin: boolean;
   status: number;
   last_login_at?: string;
+  login_attempts?: number;
+  locked_until?: string | null;
   created_at: string;
+  updated_at?: string;
+  roles?: RoleRef[];
 }
 
 export class ApiError extends Error {
@@ -155,7 +165,22 @@ async function refreshToken(): Promise<string> {
 
 async function handleResponse<T>(response: Response): Promise<T> {
   const contentType = response.headers.get('content-type');
-  
+
+  if (!response.ok) {
+    const httpStatus = response.status;
+    let errorMessage = '出错啦！请稍后再试。';
+
+    try {
+      const json = await response.json();
+      if (json.msg && json.msg.trim() !== '') {
+        errorMessage = json.msg;
+      }
+    } catch {
+    }
+
+    throw new ApiError(httpStatus, errorMessage);
+  }
+
   if (!contentType || !contentType.includes('application/json')) {
     throw new ApiError(0, 'Invalid response format');
   }
@@ -163,7 +188,8 @@ async function handleResponse<T>(response: Response): Promise<T> {
   const json: ApiResponse<T> = await response.json();
 
   if (json.code !== 200) {
-    throw new ApiError(json.code, json.msg || 'Request failed', json.data);
+    const errorMessage = (json.msg && json.msg.trim() !== '') ? json.msg : '出错啦！请稍后再试。';
+    throw new ApiError(json.code, errorMessage, json.data);
   }
 
   return json.data;
@@ -175,7 +201,22 @@ async function handleResponseWithRetry<T>(
   originalOptions: RequestInit
 ): Promise<T> {
   const contentType = response.headers.get('content-type');
-  
+
+  if (!response.ok) {
+    const httpStatus = response.status;
+    let errorMessage = '出错啦！请稍后再试。';
+
+    try {
+      const json = await response.json();
+      if (json.msg && json.msg.trim() !== '') {
+        errorMessage = json.msg;
+      }
+    } catch {
+    }
+
+    throw new ApiError(httpStatus, errorMessage);
+  }
+
   if (!contentType || !contentType.includes('application/json')) {
     throw new ApiError(0, 'Invalid response format');
   }
@@ -185,7 +226,7 @@ async function handleResponseWithRetry<T>(
   if (json.code === 17003 || json.code === 17002) {
     try {
       let newToken = '';
-      
+
       if (!isRefreshing) {
         isRefreshing = true;
         refreshPromise = refreshToken();
@@ -195,7 +236,7 @@ async function handleResponseWithRetry<T>(
       } else {
         newToken = await refreshPromise!;
       }
-      
+
       const retryResponse = await fetch(originalUrl, {
         ...originalOptions,
         headers: {
@@ -214,7 +255,8 @@ async function handleResponseWithRetry<T>(
   }
 
   if (json.code !== 200) {
-    throw new ApiError(json.code, json.msg || 'Request failed', json.data);
+    const errorMessage = (json.msg && json.msg.trim() !== '') ? json.msg : '出错啦！请稍后再试。';
+    throw new ApiError(json.code, errorMessage, json.data);
   }
 
   return json.data;
@@ -347,6 +389,10 @@ export async function getAdmins(params?: {
   return getWithAuth(url);
 }
 
+export async function getAdmin(id: string): Promise<AdminInfo> {
+  return getWithAuth(`${API_ENDPOINTS.ADMINS}/${id}`);
+}
+
 export async function createAdmin(data: {
   username: string;
   password: string;
@@ -368,6 +414,16 @@ export async function deleteAdmin(id: string): Promise<null> {
   return deleteWithAuth(`${API_ENDPOINTS.ADMINS}/${id}`);
 }
 
+export async function assignRolesToAdmin(adminId: string, roleIds: string[]): Promise<null> {
+  return postWithAuth(`${API_ENDPOINTS.ADMINS}/${adminId}/roles`, { role_ids: roleIds });
+}
+
+export interface PermissionRef {
+  id: string;
+  code: string;
+  name: string;
+}
+
 export interface RoleInfo {
   id: string
   code: string
@@ -376,6 +432,7 @@ export interface RoleInfo {
   is_system: boolean | null
   created_at: string
   updated_at: string
+  permissions?: PermissionRef[];
 }
 
 export interface PermissionInfo {
@@ -388,6 +445,7 @@ export interface PermissionInfo {
   resource_path: string | null
   parent_id: string | null
   sort_order: number | null
+  is_system: boolean | null
   created_at: string
   updated_at: string
 }

@@ -45,7 +45,7 @@ interface PermissionFormData {
   resource_type: string
   http_method: string
   resource_path: string
-  parent_id: string
+  sort_order?: number
 }
 
 export default function PermissionsPage() {
@@ -68,7 +68,6 @@ export default function PermissionsPage() {
     resource_type: "",
     http_method: "",
     resource_path: "",
-    parent_id: "",
   })
   const [formLoading, setFormLoading] = useState(false)
 
@@ -142,7 +141,6 @@ export default function PermissionsPage() {
       resource_type: "",
       http_method: "",
       resource_path: "",
-      parent_id: "",
     })
     setDialogOpen(true)
   }
@@ -157,7 +155,6 @@ export default function PermissionsPage() {
       resource_type: permission.resource_type || "",
       http_method: permission.http_method || "",
       resource_path: permission.resource_path || "",
-      parent_id: permission.parent_id || "",
     })
     setDialogOpen(true)
   }
@@ -200,13 +197,25 @@ export default function PermissionsPage() {
           resource_type: formData.resource_type,
           http_method: formData.http_method,
           resource_path: formData.resource_path,
-          parent_id: formData.parent_id,
         })
         toast.success("创建成功")
       } else if (dialogMode === "edit" && editingPermission) {
-        const updateData: any = {
+        const updateData: {
+          name: string;
+          description?: string;
+          resource_type: string;
+          http_method?: string;
+          resource_path?: string;
+          sort_order?: number;
+        } = {
           name: formData.name,
           description: formData.description,
+          resource_type: formData.resource_type,
+          http_method: formData.http_method,
+          resource_path: formData.resource_path,
+        }
+        if (formData.sort_order !== undefined) {
+          updateData.sort_order = formData.sort_order
         }
         await updatePermission(editingPermission.id, updateData)
         toast.success("更新成功")
@@ -220,7 +229,6 @@ export default function PermissionsPage() {
         resource_type: "",
         http_method: "",
         resource_path: "",
-        parent_id: "",
       })
       fetchPermissions()
     } catch (err) {
@@ -293,23 +301,20 @@ export default function PermissionsPage() {
                       <TableRow>
                         <TableHead>权限代码</TableHead>
                         <TableHead>权限名称</TableHead>
-                        <TableHead>描述</TableHead>
                         <TableHead>资源类型</TableHead>
-                        <TableHead>HTTP 方法</TableHead>
-                        <TableHead>资源路径</TableHead>
                         <TableHead>操作</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {loading ? (
                         <TableRow>
-                          <TableCell colSpan={8} className="text-center">
+                          <TableCell colSpan={4} className="text-center">
                             加载中...
                           </TableCell>
                         </TableRow>
                       ) : permissions.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={8} className="text-center">
+                          <TableCell colSpan={4} className="text-center">
                             暂无数据
                           </TableCell>
                         </TableRow>
@@ -318,12 +323,9 @@ export default function PermissionsPage() {
                           <TableRow key={permission.id}>
                             <TableCell className="font-medium">{permission.code}</TableCell>
                             <TableCell>{permission.name}</TableCell>
-                            <TableCell>{permission.description || "-"}</TableCell>
                             <TableCell>
                               <Badge variant="secondary">{permission.resource_type || "-"}</Badge>
                             </TableCell>
-                            <TableCell>{permission.http_method || "-"}</TableCell>
-                            <TableCell>{permission.resource_path || "-"}</TableCell>
                             <TableCell>
                               <div className="flex gap-2">
                                 <Button
@@ -420,62 +422,62 @@ export default function PermissionsPage() {
                   maxLength={200}
                 />
               </div>
-              {dialogMode === "create" && (
+
+              <div className="space-y-2">
+                <Label htmlFor="resource_type">资源类型</Label>
+                <Select value={formData.resource_type} onValueChange={(value) => setFormData({ ...formData, resource_type: value })}>
+                  <SelectTrigger id="resource_type">
+                    <SelectValue placeholder="请选择资源类型" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="api">API</SelectItem>
+                    <SelectItem value="menu">菜单</SelectItem>
+                    <SelectItem value="button">按钮</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {formData.resource_type === "api" && (
                 <>
                   <div className="space-y-2">
-                    <Label htmlFor="resource_type">资源类型</Label>
-                    <Select value={formData.resource_type} onValueChange={(value) => setFormData({ ...formData, resource_type: value })}>
-                      <SelectTrigger id="resource_type">
-                        <SelectValue placeholder="请选择资源类型" />
+                    <Label htmlFor="http_method">HTTP 方法</Label>
+                    <Select value={formData.http_method} onValueChange={(value) => setFormData({ ...formData, http_method: value })}>
+                      <SelectTrigger id="http_method">
+                        <SelectValue placeholder="请选择HTTP方法" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="api">API</SelectItem>
-                        <SelectItem value="menu">菜单</SelectItem>
-                        <SelectItem value="button">按钮</SelectItem>
+                        <SelectItem value="GET">GET</SelectItem>
+                        <SelectItem value="POST">POST</SelectItem>
+                        <SelectItem value="PUT">PUT</SelectItem>
+                        <SelectItem value="DELETE">DELETE</SelectItem>
+                        <SelectItem value="PATCH">PATCH</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                  {formData.resource_type === "api" && (
-                    <>
-                      <div className="space-y-2">
-                        <Label htmlFor="http_method">HTTP 方法</Label>
-                        <Select value={formData.http_method} onValueChange={(value) => setFormData({ ...formData, http_method: value })}>
-                          <SelectTrigger id="http_method">
-                            <SelectValue placeholder="请选择HTTP方法" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="GET">GET</SelectItem>
-                            <SelectItem value="POST">POST</SelectItem>
-                            <SelectItem value="PUT">PUT</SelectItem>
-                            <SelectItem value="DELETE">DELETE</SelectItem>
-                            <SelectItem value="PATCH">PATCH</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="resource_path">资源路径</Label>
-                        <Input
-                          id="resource_path"
-                          value={formData.resource_path}
-                          onChange={(e) => setFormData({ ...formData, resource_path: e.target.value })}
-                          placeholder="例如: /api/v1/users"
-                          disabled={formLoading}
-                        />
-                      </div>
-                    </>
-                  )}
                   <div className="space-y-2">
-                    <Label htmlFor="parent_id">父级权限ID（可选）</Label>
+                    <Label htmlFor="resource_path">资源路径</Label>
                     <Input
-                      id="parent_id"
-                      value={formData.parent_id}
-                      onChange={(e) => setFormData({ ...formData, parent_id: e.target.value })}
-                      placeholder="请输入父级权限ID"
+                      id="resource_path"
+                      value={formData.resource_path}
+                      onChange={(e) => setFormData({ ...formData, resource_path: e.target.value })}
+                      placeholder="例如: /api/v1/users"
                       disabled={formLoading}
                     />
                   </div>
                 </>
               )}
+
+              <div className="space-y-2">
+                <Label htmlFor="sort_order">排序（可选）</Label>
+                <Input
+                  id="sort_order"
+                  type="number"
+                  value={formData.sort_order || ""}
+                  onChange={(e) => setFormData({ ...formData, sort_order: e.target.value ? parseInt(e.target.value) : undefined })}
+                  placeholder="请输入排序值，数字越小越靠前"
+                  disabled={formLoading}
+                />
+              </div>
             </div>
             <DialogFooter>
               <Button
