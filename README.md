@@ -20,6 +20,7 @@
   </p>
 </div>
 
+**本项目是前端项目库，现[Guardian](https://github.com/cherish-ltt/Guardian)项目的前后端项目合并在一个仓库内，因此本项目归档不再更新，请直接使用[Guardian](https://github.com/cherish-ltt/Guardian)完整项目即可**
 
 基于 Next.js 16、React 19、Tailwind CSS 和 shadcn/ui 构建的现代化前端应用，为  [Guardian](https://github.com/cherish-ltt/Guardian) 后端认证系统提供完整的 Web 界面。
 
